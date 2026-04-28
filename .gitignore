@@ -5,6 +5,8 @@ __pycache__/
 .venv/
 venv/
 
+javac.*.args
+
 # Android build intermediates
 android-build/gen/
 android-build/class/
