@@ -8,7 +8,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.gamegen.app.databinding.ActivityPromptBinding
 import com.gamegen.app.generator.AiConfigGenerator
-import com.gamegen.app.generator.GameGenerator
+import com.gamegen.app.generator.GameConfig
+import com.gamegen.app.generator.PromptParser
 
 class PromptActivity : AppCompatActivity() {
 
@@ -51,22 +52,55 @@ class PromptActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.VISIBLE
         binding.btnGenerate.isEnabled = false
         binding.tvStatus.text = if (AiConfigGenerator.isConfigured(this))
-            "Asking AI model..." else "Parsing prompt locally..."
+            "Asking AI model..." else "Parsing prompt..."
         binding.tvStatus.visibility = View.VISIBLE
 
         Thread {
             val config = AiConfigGenerator.generate(this, prompt)
-            val game = GameGenerator.generate(config)
+            val parseResult = if (!AiConfigGenerator.isConfigured(this))
+                PromptParser.parseWithDetails(prompt) else null
 
             runOnUiThread {
                 binding.progressBar.visibility = View.GONE
                 binding.btnGenerate.isEnabled = true
                 binding.tvStatus.visibility = View.GONE
-                val intent = Intent(this, GameActivity::class.java)
-                intent.putExtra(GameActivity.EXTRA_CONFIG, config)
-                startActivity(intent)
+                showResultDialog(config, parseResult, prompt)
             }
         }.start()
+    }
+
+    private fun showResultDialog(
+        config: GameConfig,
+        parseResult: PromptParser.ParseResult?,
+        prompt: String
+    ) {
+        val details = buildString {
+            appendLine("\"${prompt.take(60)}${if (prompt.length > 60) "…" else ""}\"")
+            appendLine()
+            appendLine("🎮  ${config.gameType.displayName}")
+            appendLine("🎨  ${config.theme.displayName}")
+            appendLine("⚔️   ${config.difficulty.displayName}")
+            appendLine("🗺️   World size ${config.worldSize}")
+            if (parseResult != null && parseResult.notes.isNotEmpty()) {
+                appendLine()
+                parseResult.notes.forEach { appendLine("• $it") }
+            }
+            appendLine()
+            appendLine("Game: \"${config.gameName}\"")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Game Ready!")
+            .setMessage(details)
+            .setPositiveButton("Play Now") { _, _ -> launchGame(config) }
+            .setNegativeButton("Edit Prompt", null)
+            .show()
+    }
+
+    private fun launchGame(config: GameConfig) {
+        val intent = Intent(this, GameActivity::class.java)
+        intent.putExtra(GameActivity.EXTRA_CONFIG, config)
+        startActivity(intent)
     }
 
     private fun showSettingsDialog() {
@@ -98,9 +132,9 @@ class PromptActivity : AppCompatActivity() {
     private fun updateModelLabel() {
         val (url, model, _) = AiConfigGenerator.getSettings(this)
         binding.tvModelInfo.text = if (url.isBlank())
-            "Mode: Local keyword parsing (no AI configured)"
+            "Mode: Local keyword parsing (tap Configure AI for smarter results)"
         else
-            "Model: ${model.ifBlank { "llama3.2" }}  •  ${url.substringBefore("/v1")}"
+            "AI: ${model.ifBlank { "llama3.2" }}  •  ${url.substringBefore("/v1")}"
     }
 
     override fun onSupportNavigateUp(): Boolean { onBackPressed(); return true }
