@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_dark">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Summary card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="12dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GAME SUMMARY"
+                    android:textSize="11sp"
+                    android:textColor="@color/accent_neon"
+                    android:letterSpacing="0.1" />
+                <TextView
+                    android:id="@+id/tv_config_summary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Maze Runner • Neon City • Normal • Size 20"
+                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Game Name -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Game name (optional)"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_game_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textColor="@color/white" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Game Type -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Game Type" android:textColor="@color/white" android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+        <Spinner
+            android:id="@+id/spinner_game_type"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/spinner_bg"
+            android:paddingStart="12dp" android:paddingEnd="12dp" />
+        <TextView
+            android:id="@+id/tv_game_type_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Navigate through a procedural 3D maze"
+            android:textSize="12sp"
+            android:textColor="#AAFFFFFF"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Theme -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="World Theme" android:textColor="@color/white" android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+        <Spinner
+            android:id="@+id/spinner_theme"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/spinner_bg"
+            android:paddingStart="12dp" android:paddingEnd="12dp" />
+
+        <!-- Difficulty -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Difficulty" android:textColor="@color/white" android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+        <Spinner
+            android:id="@+id/spinner_difficulty"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/spinner_bg"
+            android:paddingStart="12dp" android:paddingEnd="12dp" />
+
+        <!-- World Size -->
+        <TextView
+            android:id="@+id/tv_size_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="World Size: 20"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slider_world_size"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:valueFrom="10"
+            android:valueTo="40"
+            android:value="20"
+            android:stepSize="1"
+            android:layout_marginBottom="16dp"
+            app:thumbColor="@color/accent_neon"
+            app:trackColorActive="@color/accent_neon"
+            app:trackColorInactive="#44FFFFFF" />
+
+        <!-- Toggles -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginBottom="8dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Enable Fog"
+                android:textColor="@color/white" android:textSize="14sp"
+                android:gravity="center_vertical" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_fog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginBottom="24dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Enable Particles"
+                android:textColor="@color/white" android:textSize="14sp"
+                android:gravity="center_vertical" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_particles"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_generate"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Generate &amp; Play"
+            android:textSize="16sp"
+            app:cornerRadius="28dp"
+            app:backgroundTint="@color/purple_500" />
+
+    </LinearLayout>
+</ScrollView>

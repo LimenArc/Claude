@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">3D Game Generator</string>
+    <string name="generate_game">Generate Game</string>
+    <string name="my_library">My Library</string>
+    <string name="configure_game">Configure Your Game</string>
+    <string name="game_type">Game Type</string>
+    <string name="world_theme">World Theme</string>
+    <string name="difficulty">Difficulty</string>
+    <string name="world_size">World Size</string>
+    <string name="generate">Generate &amp; Play</string>
+    <string name="enable_fog">Enable Fog</string>
+    <string name="enable_particles">Enable Particles</string>
+    <string name="game_name_hint">Game name (optional)</string>
+    <string name="no_games">No saved games yet.\nGenerate your first game!</string>
+</resources>
