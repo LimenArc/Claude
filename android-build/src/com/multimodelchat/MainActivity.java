@@ -1,9 +1,13 @@
 package com.multimodelchat;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.DocumentsContract;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -33,6 +37,7 @@ public class MainActivity extends Activity {
     private static final String RELEASE_URL =
         "https://github.com/ggml-org/llama.cpp/releases/download/b8953/llama-b8953-bin-android-arm64.tar.gz";
     private static final int SERVER_PORT = 8080;
+    private static final int REQUEST_FOLDER = 1;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WebView webView;
@@ -66,6 +71,34 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_FOLDER && resultCode == RESULT_OK && data != null) {
+            String path = uriToPath(data.getData());
+            if (path != null) {
+                js("onFolderSelected('" + path.replace("'", "\\'") + "')");
+            }
+        }
+    }
+
+    private String uriToPath(Uri uri) {
+        try {
+            String docId = DocumentsContract.getTreeDocumentId(uri);
+            String[] parts = docId.split(":", 2);
+            if (parts.length == 2) {
+                if ("primary".equals(parts[0])) {
+                    return Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + parts[1];
+                } else {
+                    return "/storage/" + parts[0] + "/" + parts[1];
+                }
+            }
+            return Environment.getExternalStorageDirectory().getAbsolutePath();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private File binDir() { return new File(getFilesDir(), "llama"); }
@@ -185,6 +218,16 @@ public class MainActivity extends Activity {
             killServer();
             currentModelName = "";
             js("onShowModelPicker()");
+        }
+
+        @JavascriptInterface
+        public void browseFolders() {
+            ui.post(new Runnable() {
+                public void run() {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                    startActivityForResult(intent, REQUEST_FOLDER);
+                }
+            });
         }
 
         @JavascriptInterface

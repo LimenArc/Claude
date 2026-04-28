@@ -203,6 +203,7 @@
   <h2>Choose a Model</h2>
   <div class="folder-row">
     <input class="folder-input" id="folder-input" type="text" placeholder="/path/to/models" spellcheck="false" autocapitalize="none"/>
+    <button class="folder-btn" onclick="browseFolders()">📁</button>
     <button class="folder-btn" onclick="rescanFolder()">Scan</button>
   </div>
   <div id="model-list" class="model-list"></div>
@@ -463,6 +464,15 @@ function onModelError(msg) {
 function onShowModelPicker() {
   showScreen('screen-picker');
   loadFolderInput();
+  rescanFolder();
+}
+
+function browseFolders() {
+  if (AB) AB.browseFolders();
+}
+
+function onFolderSelected(path) {
+  document.getElementById('folder-input').value = path;
   rescanFolder();
 }
 
