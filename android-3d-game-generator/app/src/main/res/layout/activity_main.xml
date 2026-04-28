@@ -33,14 +33,27 @@
         android:layout_marginBottom="48dp" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_prompt"
+        android:layout_width="280dp"
+        android:layout_height="56dp"
+        android:text="✨ Generate from Prompt"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"
+        app:cornerRadius="28dp"
+        app:backgroundTint="#FF6200EE"
+        app:iconGravity="textStart" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_generate"
         android:layout_width="280dp"
         android:layout_height="56dp"
-        android:text="Generate New Game"
+        android:text="Manual Configure"
         android:textSize="16sp"
         android:layout_marginBottom="16dp"
         app:cornerRadius="28dp"
-        app:backgroundTint="@color/purple_500" />
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        app:strokeColor="@color/purple_500"
+        android:textColor="@color/purple_200" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_library"

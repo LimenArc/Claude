@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_dark">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Model info bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tv_model_info"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Mode: Local keyword parsing"
+                android:textColor="#AAFFFFFF"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_settings"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Configure AI"
+                android:textSize="11sp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/accent_neon"
+                android:textColor="@color/accent_neon" />
+        </LinearLayout>
+
+        <!-- Prompt input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Describe your game..."
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_prompt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minLines="4"
+                android:gravity="top"
+                android:inputType="textMultiLine|textCapSentences"
+                android:textColor="@color/white"
+                android:hint="e.g. A huge dark ice dungeon with extreme difficulty and lots of enemies" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Quick chips -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quick add:"
+            android:textColor="#AAFFFFFF"
+            android:textSize="12sp"
+            android:layout_marginBottom="6dp" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_maze"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Maze"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                app:chipBackgroundColor="@color/surface_card"
+                app:chipStrokeColor="@color/accent_neon"
+                app:chipStrokeWidth="1dp"
+                android:textColor="@color/white" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_platform"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Platforms"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                app:chipBackgroundColor="@color/surface_card"
+                app:chipStrokeColor="@color/accent_neon"
+                app:chipStrokeWidth="1dp"
+                android:textColor="@color/white" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_dungeon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dungeon"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                app:chipBackgroundColor="@color/surface_card"
+                app:chipStrokeColor="@color/accent_neon"
+                app:chipStrokeWidth="1dp"
+                android:textColor="@color/white" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_space"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Space"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                app:chipBackgroundColor="@color/surface_card"
+                app:chipStrokeColor="@color/accent_neon"
+                app:chipStrokeWidth="1dp"
+                android:textColor="@color/white" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_tower"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tower"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                app:chipBackgroundColor="@color/surface_card"
+                app:chipStrokeColor="@color/accent_neon"
+                app:chipStrokeWidth="1dp"
+                android:textColor="@color/white" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Status -->
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Asking AI model..."
+            android:textColor="@color/accent_neon"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:indeterminateTint="@color/accent_neon"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
+        <!-- Generate button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_generate"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Generate Game from Prompt"
+            android:textSize="16sp"
+            app:cornerRadius="28dp"
+            app:backgroundTint="@color/purple_500" />
+
+        <!-- Help card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="12dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI SETUP (OPTIONAL)"
+                    android:textSize="11sp"
+                    android:textColor="@color/accent_neon"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="6dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#AAFFFFFF"
+                    android:textSize="12sp"
+                    android:lineSpacingMultiplier="1.4"
+                    android:text="Without AI: keywords like 'maze', 'hard', 'ice' are matched locally.\n\nWith AI (smarter): tap Configure AI and enter:\n• Ollama (local): http://&lt;your-pc-ip&gt;:11434/v1/chat/completions\n• Groq (free): https://api.groq.com/openai/v1/chat/completions\n• Any OpenAI-compatible endpoint\n\nRecommended free models: llama3.2, gemma2-9b-it, mixtral-8x7b" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>

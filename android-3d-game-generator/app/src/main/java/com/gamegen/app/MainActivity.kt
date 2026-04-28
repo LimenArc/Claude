@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.gamegen.app.databinding.ActivityMainBinding
 import com.gamegen.app.ui.GameConfigActivity
 import com.gamegen.app.ui.GamesLibraryActivity
+import com.gamegen.app.ui.PromptActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,6 +16,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.btnPrompt.setOnClickListener {
+            startActivity(Intent(this, PromptActivity::class.java))
+        }
 
         binding.btnGenerate.setOnClickListener {
             startActivity(Intent(this, GameConfigActivity::class.java))
