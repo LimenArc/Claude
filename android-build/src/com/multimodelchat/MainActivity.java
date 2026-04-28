@@ -2,12 +2,15 @@ package com.multimodelchat;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.DocumentsContract;
+import android.provider.Settings;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -38,6 +41,7 @@ public class MainActivity extends Activity {
         "https://github.com/ggml-org/llama.cpp/releases/download/b8953/llama-b8953-bin-android-arm64.tar.gz";
     private static final int SERVER_PORT = 8080;
     private static final int REQUEST_FOLDER = 1;
+    private static final int REQUEST_STORAGE = 2;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WebView webView;
@@ -71,6 +75,21 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        js("if(typeof onAppResume==='function')onAppResume()");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_STORAGE && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            js("onStorageGranted()");
+        }
     }
 
     @Override
@@ -218,6 +237,50 @@ public class MainActivity extends Activity {
             killServer();
             currentModelName = "";
             js("onShowModelPicker()");
+        }
+
+        @JavascriptInterface
+        public String getStorageStatus() {
+            if (Build.VERSION.SDK_INT >= 30) {
+                try {
+                    java.lang.reflect.Method m = Environment.class.getMethod("isExternalStorageManager");
+                    Boolean r = (Boolean) m.invoke(null);
+                    return (r != null && r) ? "ok" : "needs_all_files";
+                } catch (Exception e) {
+                    return "ok";
+                }
+            } else if (Build.VERSION.SDK_INT >= 23) {
+                int perm = checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                return perm == PackageManager.PERMISSION_GRANTED ? "ok" : "needs_request";
+            }
+            return "ok";
+        }
+
+        @JavascriptInterface
+        public void requestStorageAccess() {
+            ui.post(new Runnable() {
+                public void run() {
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        try {
+                            Intent i = new Intent(
+                                "android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION",
+                                Uri.parse("package:" + getPackageName()));
+                            startActivity(i);
+                        } catch (Exception e) {
+                            try {
+                                startActivity(new Intent(
+                                    "android.settings.MANAGE_ALL_FILES_ACCESS_PERMISSION"));
+                            } catch (Exception e2) {
+                                startActivity(new Intent(Settings.ACTION_SETTINGS));
+                            }
+                        }
+                    } else {
+                        requestPermissions(
+                            new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
+                            REQUEST_STORAGE);
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

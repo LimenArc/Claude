@@ -413,11 +413,24 @@ function rescanFolder() {
     return;
   }
   localStorage.setItem('models_folder', folder);
+
+  if (AB) {
+    var st = AB.getStorageStatus();
+    if (st !== 'ok') {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">' +
+        'Storage access required to read model files.<br><br>' +
+        '<button onclick="requestStorage()" style="padding:8px 20px;border-radius:8px;' +
+        'border:none;background:var(--accent);color:#fff;font-size:13px;cursor:pointer">' +
+        'Grant Access</button></div>';
+      return;
+    }
+  }
+
   list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Scanning…</div>';
   var raw = AB ? AB.getModelList(folder) : '';
   list.innerHTML = '';
   if (!raw) {
-    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">No .gguf files found. Copy model files to this folder and tap Refresh.</div>';
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">No .gguf files found in this folder.</div>';
     return;
   }
   var lines = raw.split('\n');
@@ -431,6 +444,21 @@ function rescanFolder() {
     item.innerHTML = '<strong>' + esc(name) + '</strong>';
     item.onclick = (function(p) { return function() { selectModel(p); }; })(path);
     list.appendChild(item);
+  }
+}
+
+function requestStorage() {
+  if (AB) AB.requestStorageAccess();
+}
+
+function onStorageGranted() {
+  rescanFolder();
+}
+
+function onAppResume() {
+  var screen = document.querySelector('.screen.active');
+  if (screen && screen.id === 'screen-picker' && AB && AB.getStorageStatus() === 'ok') {
+    rescanFolder();
   }
 }
 
