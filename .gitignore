@@ -4,3 +4,11 @@ __pycache__/
 .env
 .venv/
 venv/
+
+# Android build intermediates
+android-build/gen/
+android-build/class/
+android-build/classes.dex
+android-build/unsigned.apk
+android-build/aligned.apk
+android-build/debug.keystore
