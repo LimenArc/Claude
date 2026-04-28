@@ -135,7 +135,7 @@ public class MainActivity extends Activity {
             try {
                 ui.post(() -> status.setText("Connecting…"));
                 HttpURLConnection conn = openConn(new URL(RELEASE_URL));
-                long total = conn.getContentLengthLong();
+                long total = conn.getContentLength();
 
                 File tmp = new File(getCacheDir(), "llama.tar.gz");
                 try (InputStream in = new BufferedInputStream(conn.getInputStream(), 65536);
