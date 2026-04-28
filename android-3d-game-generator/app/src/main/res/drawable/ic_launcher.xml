@@ -5,30 +5,35 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <rect android:x="0" android:y="0"
-        android:width="108" android:height="108"
+    <!-- Dark background -->
+    <path
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z"
         android:fillColor="#1A1A2E" />
 
-    <!-- Cube wireframe icon -->
+    <!-- Cube top face -->
     <path
-        android:pathData="M54,20 L80,35 L80,65 L54,80 L28,65 L28,35 Z"
-        android:fillColor="#00000000"
-        android:strokeColor="#00D4FF"
-        android:strokeWidth="3" />
-
-    <!-- Inner cube face -->
-    <path
-        android:pathData="M54,35 L70,44 L70,62 L54,71 L38,62 L38,44 Z"
-        android:fillColor="#1100D4FF"
+        android:pathData="M54,18 L80,33 L54,48 L28,33 Z"
+        android:fillColor="#003355"
         android:strokeColor="#00D4FF"
         android:strokeWidth="2" />
 
-    <!-- Vertical lines -->
-    <line android:x1="54" android:y1="20" android:x2="54" android:y2="35"
-        android:strokeColor="#00D4FF" android:strokeWidth="2" />
-    <line android:x1="28" android:y1="35" android:x2="38" android:y2="44"
-        android:strokeColor="#00D4FF" android:strokeWidth="2" />
-    <line android:x1="80" android:y1="35" android:x2="70" android:y2="44"
-        android:strokeColor="#00D4FF" android:strokeWidth="2" />
+    <!-- Cube left face -->
+    <path
+        android:pathData="M28,33 L54,48 L54,78 L28,63 Z"
+        android:fillColor="#001A33"
+        android:strokeColor="#00D4FF"
+        android:strokeWidth="2" />
+
+    <!-- Cube right face -->
+    <path
+        android:pathData="M80,33 L80,63 L54,78 L54,48 Z"
+        android:fillColor="#002244"
+        android:strokeColor="#00D4FF"
+        android:strokeWidth="2" />
+
+    <!-- Inner glow dot at center -->
+    <path
+        android:pathData="M54,48 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"
+        android:fillColor="#00D4FF" />
 
 </vector>
