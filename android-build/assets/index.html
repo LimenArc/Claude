@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Multi-Model Chat</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
+    --accent:#6366f1;--accent2:#818cf8;
+    --text:#e2e8f0;--muted:#94a3b8;--border:#2d3348;
+    --user-bg:#312e81;--asst-bg:#1e2235;--red:#ef4444;--green:#22c55e;
+  }
+  html,body{height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-size:15px;overflow:hidden}
+  #app{display:flex;flex-direction:column;height:100%}
+
+  /* Header */
+  #header{background:var(--surface);border-bottom:1px solid var(--border);
+    padding:10px 14px;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
+  #header-top{display:flex;align-items:center;gap:8px}
+  #app-title{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;flex:1}
+  #mode-btns{display:flex;gap:4px}
+  .mode-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:13px;transition:all .2s}
+  .mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  #new-chat-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap}
+  #new-chat-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* Local mode info row */
+  #local-info{display:flex;align-items:center;gap:8px}
+  #model-name-label{font-size:12px;color:var(--muted);flex:1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #change-model-btn{padding:3px 10px;border-radius:6px;border:1px solid var(--border);
+    background:transparent;color:var(--accent2);cursor:pointer;font-size:11px;white-space:nowrap}
+  #change-model-btn:hover{background:var(--surface2)}
+
+  /* Cloud model row */
+  #cloud-model-row{display:none;align-items:center;gap:6px}
+  #model-select{flex:1;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px}
+  #add-model-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);
+    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
+  #add-model-btn:hover{background:var(--surface2)}
+  #apikey-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:11px;white-space:nowrap}
+  #apikey-btn:hover{background:var(--surface2)}
+
+  /* System prompt */
+  #sysprompt-row{display:flex;gap:6px}
+  #sysprompt{flex:1;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:6px;padding:6px 8px;
+    font-size:12px;resize:none;min-height:34px;max-height:72px;
+    font-family:inherit;line-height:1.4}
+  #sysprompt::placeholder{color:var(--muted)}
+
+  /* API Key screen */
+  #apikey-screen{display:none;flex-direction:column;gap:14px;
+    padding:28px 20px;align-items:center;justify-content:center;flex:1}
+  #apikey-screen .ak-icon{font-size:36px;opacity:.6}
+  #apikey-screen h2{font-size:18px;font-weight:600;color:var(--text);text-align:center}
+  #apikey-screen p{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
+  #apikey-input{width:100%;max-width:380px;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;
+    font-family:monospace}
+  #apikey-input::placeholder{color:var(--muted)}
+  #apikey-save-btn{padding:10px 28px;border-radius:8px;border:none;
+    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+  #apikey-save-btn:hover{background:var(--accent2)}
+
+  /* Messages */
+  #messages{flex:1;overflow-y:auto;padding:12px 14px;
+    display:flex;flex-direction:column;gap:10px}
+  #messages::-webkit-scrollbar{width:4px}
+  #messages::-webkit-scrollbar-track{background:transparent}
+  #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
+  .msg.user{align-self:flex-end;align-items:flex-end}
+  .msg.assistant{align-self:flex-start;align-items:flex-start}
+  .msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.5px;padding:0 4px}
+  .msg-bubble{padding:9px 13px;border-radius:12px;line-height:1.55;
+    white-space:pre-wrap;word-break:break-word;font-size:14px}
+  .msg.user .msg-bubble{background:var(--user-bg);color:#c7d2fe;border-bottom-right-radius:4px}
+  .msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px}
+  .msg-bubble.streaming::after{content:'▌';
+    animation:blink .7s steps(1) infinite;color:var(--accent2)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  /* Token bar */
+  #token-bar{padding:5px 14px;background:var(--surface);
+    border-top:1px solid var(--border);font-size:11px;color:var(--muted);
+    display:none;gap:10px;flex-wrap:wrap;flex-shrink:0}
+  .tok-item{display:flex;gap:4px;align-items:center}
+  .tok-val{color:var(--accent2);font-weight:600}
+  .tok-cache{color:var(--green);font-weight:600}
+
+  /* Input */
+  #input-row{background:var(--surface);border-top:1px solid var(--border);
+    padding:10px 14px;display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+  #user-input{flex:1;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:10px;padding:9px 12px;
+    font-size:14px;font-family:inherit;resize:none;min-height:40px;
+    max-height:120px;line-height:1.45;outline:none;transition:border .15s}
+  #user-input:focus{border-color:var(--accent)}
+  #user-input::placeholder{color:var(--muted)}
+  #send-btn{padding:9px 18px;border-radius:10px;border:none;
+    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;
+    font-weight:600;white-space:nowrap;flex-shrink:0;transition:background .15s}
+  #send-btn:hover:not(:disabled){background:var(--accent2)}
+  #send-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* Empty state */
+  #empty-state{display:flex;flex-direction:column;align-items:center;
+    justify-content:center;flex:1;gap:10px;color:var(--muted);padding:20px;text-align:center}
+  #empty-state .es-icon{font-size:36px;opacity:.35}
+  #empty-state p{font-size:13px;max-width:280px}
+
+  /* Dialog */
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);
+    z-index:200;align-items:center;justify-content:center;padding:20px}
+  #overlay.show{display:flex}
+  #dialog{background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:22px;width:100%;max-width:340px;
+    display:flex;flex-direction:column;gap:14px}
+  #dialog h3{color:var(--text);font-size:16px;font-weight:600}
+  #dialog p{color:var(--muted);font-size:12px}
+  #dialog-input{background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;
+    padding:9px 12px;font-size:13px;width:100%;font-family:monospace}
+  #dialog-input:focus{outline:none;border-color:var(--accent)}
+  #dialog-btns{display:flex;gap:8px;justify-content:flex-end}
+  .dlg-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
+  .dlg-ok{padding:7px 16px;border-radius:8px;border:none;
+    background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600}
+  .dlg-ok:hover{background:var(--accent2)}
+
+  /* Error toast */
+  #err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;
+    font-size:12px;display:none;z-index:300;max-width:90%;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-top">
+      <span id="app-title">Multi-Model Chat</span>
+      <div id="mode-btns">
+        <button class="mode-btn active" id="btn-local" onclick="setMode('local')">Local</button>
+        <button class="mode-btn" id="btn-cloud" onclick="setMode('cloud')">Cloud</button>
+      </div>
+      <button id="new-chat-btn" onclick="newChat()">+ New</button>
+    </div>
+
+    <!-- Local info row -->
+    <div id="local-info">
+      <span id="model-name-label">Initializing…</span>
+      <button id="change-model-btn" onclick="doChangeModel()" style="display:none">Change Model</button>
+    </div>
+
+    <!-- Cloud model row -->
+    <div id="cloud-model-row">
+      <select id="model-select" onchange="saveCloudModel()"></select>
+      <button id="add-model-btn" onclick="showAddModelDialog()">+ Model</button>
+      <button id="apikey-btn" onclick="showApikeyScreen()">🔑 Key</button>
+    </div>
+
+    <!-- System prompt -->
+    <div id="sysprompt-row">
+      <textarea id="sysprompt" rows="1" placeholder="System prompt (optional)…"
+        oninput="autoResize(this)"></textarea>
+    </div>
+  </div>
+
+  <!-- API Key screen (shown when cloud + no key) -->
+  <div id="apikey-screen">
+    <div class="ak-icon">🔑</div>
+    <h2>Anthropic API Key</h2>
+    <p>Enter your API key to use Claude models. Stored locally on your device only.</p>
+    <input id="apikey-input" type="password" placeholder="sk-ant-…" autocomplete="off"
+      onkeydown="if(event.key==='Enter')saveApiKey()"/>
+    <button id="apikey-save-btn" onclick="saveApiKey()">Save Key &amp; Continue</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages">
+    <div id="empty-state">
+      <div class="es-icon">💬</div>
+      <p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p>
+    </div>
+  </div>
+
+  <!-- Token usage bar (cloud) -->
+  <div id="token-bar">
+    <span class="tok-item">In: <span class="tok-val" id="tok-in">0</span></span>
+    <span class="tok-item">Out: <span class="tok-val" id="tok-out">0</span></span>
+    <span class="tok-item" id="cache-item" style="display:none">
+      Cache: <span class="tok-cache" id="tok-cache">0</span>
+    </span>
+  </div>
+
+  <!-- Input -->
+  <div id="input-row">
+    <textarea id="user-input" rows="1" placeholder="Type a message… (Enter to send)"
+      oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+
+</div>
+
+<!-- Add custom model dialog -->
+<div id="overlay" onclick="overlayClick(event)">
+  <div id="dialog">
+    <h3>Add Custom Model</h3>
+    <p>Enter any Claude model ID (e.g. claude-opus-4-20250514)</p>
+    <input id="dialog-input" type="text" placeholder="claude-…"
+      autocapitalize="none" spellcheck="false"
+      onkeydown="if(event.key==='Enter')confirmAddModel()"/>
+    <div id="dialog-btns">
+      <button class="dlg-cancel" onclick="hideOverlay()">Cancel</button>
+      <button class="dlg-ok" onclick="confirmAddModel()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="err-toast"></div>
+
+<script>
+// ── Android bridge ──────────────────────────────────────────────────────────
+const AB = window.Android || null;
+const localPort = AB ? AB.getLocalPort() : 8080;
+
+// ── Constants ───────────────────────────────────────────────────────────────
+const BUILTIN_MODELS = [
+  {id:'claude-opus-4-20250514',  label:'Opus 4.7'},
+  {id:'claude-opus-4-5',         label:'Opus 4.6'},
+  {id:'claude-sonnet-4-5',       label:'Sonnet 4.6'},
+  {id:'claude-haiku-4-5',        label:'Haiku 4.5'},
+];
+
+// ── State ───────────────────────────────────────────────────────────────────
+let mode = 'local';
+let messages = [];
+let streaming = false;
+let abortCtrl = null;
+let tokIn = 0, tokOut = 0, tokCache = 0;
+
+// ── Boot ────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  populateModelSelect();
+  // Restore saved model
+  const saved = localStorage.getItem('cloud_model');
+  if (saved) {
+    const sel = document.getElementById('model-select');
+    if (sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
+  }
+  // Show local mode initially
+  applyMode('local');
+  // Update local model name
+  if (AB) {
+    const name = AB.getModelName();
+    setLocalModelName(name || 'No model loaded');
+  } else {
+    setLocalModelName('Browser mode (no Android bridge)');
+  }
+});
+
+// ── onModelReady — called by Java via evaluateJavascript ───────────────────
+function onModelReady(name) {
+  setLocalModelName(name);
+}
+
+function setLocalModelName(name) {
+  document.getElementById('model-name-label').textContent = name ? '🤖 ' + name : 'No model';
+}
+
+// ── Mode switching ──────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  applyMode(m);
+}
+
+function applyMode(m) {
+  mode = m;
+  document.getElementById('btn-local').classList.toggle('active', m === 'local');
+  document.getElementById('btn-cloud').classList.toggle('active', m === 'cloud');
+
+  var localInfo    = document.getElementById('local-info');
+  var cloudRow     = document.getElementById('cloud-model-row');
+  var apikeyScr    = document.getElementById('apikey-screen');
+  var messagesEl   = document.getElementById('messages');
+  var inputRow     = document.getElementById('input-row');
+  var tokenBar     = document.getElementById('token-bar');
+
+  if (m === 'local') {
+    localInfo.style.display  = 'flex';
+    cloudRow.style.display   = 'none';
+    apikeyScr.style.display  = 'none';
+    messagesEl.style.display = 'flex';
+    inputRow.style.display   = 'flex';
+    tokenBar.style.display   = 'none';
+    document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
+  } else {
+    localInfo.style.display  = 'none';
+    cloudRow.style.display   = 'flex';
+    tokenBar.style.display   = 'flex';
+    var key = localStorage.getItem('anthropic_key') || '';
+    if (!key) {
+      showApikeyScreen();
+    } else {
+      apikeyScr.style.display  = 'none';
+      messagesEl.style.display = 'flex';
+      inputRow.style.display   = 'flex';
+    }
+  }
+}
+
+function showApikeyScreen() {
+  document.getElementById('apikey-screen').style.display  = 'flex';
+  document.getElementById('messages').style.display       = 'none';
+  document.getElementById('input-row').style.display      = 'none';
+}
+
+function saveApiKey() {
+  var v = document.getElementById('apikey-input').value.trim();
+  if (!v.startsWith('sk-')) { showErr('Key must start with sk-ant-…'); return; }
+  localStorage.setItem('anthropic_key', v);
+  document.getElementById('apikey-screen').style.display  = 'none';
+  document.getElementById('messages').style.display       = 'flex';
+  document.getElementById('input-row').style.display      = 'flex';
+}
+
+// ── Local model controls ────────────────────────────────────────────────────
+function doChangeModel() {
+  if (AB) AB.changeModel();
+}
+
+// ── Cloud model selector ────────────────────────────────────────────────────
+function populateModelSelect() {
+  var sel = document.getElementById('model-select');
+  sel.innerHTML = '';
+  var custom = getCustomModels();
+  var all = BUILTIN_MODELS.concat(custom.map(function(id){ return {id:id, label:id}; }));
+  all.forEach(function(m) {
+    var o = document.createElement('option');
+    o.value = m.id; o.textContent = m.label || m.id;
+    sel.appendChild(o);
+  });
+}
+
+function saveCloudModel() {
+  var sel = document.getElementById('model-select');
+  localStorage.setItem('cloud_model', sel.value);
+}
+
+function getCustomModels() {
+  try { return JSON.parse(localStorage.getItem('custom_models') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveCustomModelsList(arr) {
+  localStorage.setItem('custom_models', JSON.stringify(arr));
+}
+
+function showAddModelDialog() {
+  document.getElementById('dialog-input').value = '';
+  document.getElementById('overlay').classList.add('show');
+  setTimeout(function(){ document.getElementById('dialog-input').focus(); }, 60);
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function overlayClick(e) {
+  if (e.target.id === 'overlay') hideOverlay();
+}
+
+function confirmAddModel() {
+  var v = document.getElementById('dialog-input').value.trim();
+  if (!v) return;
+  var custom = getCustomModels();
+  if (custom.indexOf(v) === -1) {
+    custom.push(v);
+    saveCustomModelsList(custom);
+    populateModelSelect();
+    var sel = document.getElementById('model-select');
+    // add option and select it
+    sel.value = v;
+    localStorage.setItem('cloud_model', v);
+  }
+  hideOverlay();
+}
+
+// ── Chat ────────────────────────────────────────────────────────────────────
+function newChat() {
+  if (streaming && abortCtrl) { abortCtrl.abort(); }
+  messages = [];
+  var el = document.getElementById('messages');
+  el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div>' +
+    '<p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p></div>';
+  resetTokenBar();
+}
+
+function addMessage(role, content) {
+  var es = document.getElementById('empty-state');
+  if (es) es.remove();
+  var container = document.getElementById('messages');
+  var wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  var roleLabel = role === 'user' ? 'You' : 'Assistant';
+  wrap.innerHTML = '<span class="msg-role">' + roleLabel + '</span>' +
+    '<div class="msg-bubble"></div>';
+  wrap.querySelector('.msg-bubble').textContent = content;
+  container.appendChild(wrap);
+  scrollBottom();
+  return wrap.querySelector('.msg-bubble');
+}
+
+function scrollBottom() {
+  var el = document.getElementById('messages');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendMessage() {
+  if (streaming) { if (abortCtrl) abortCtrl.abort(); return; }
+  var inp = document.getElementById('user-input');
+  var text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; autoResize(inp);
+
+  messages.push({role:'user', content:text});
+  addMessage('user', text);
+
+  var btn = document.getElementById('send-btn');
+  btn.disabled = false;
+  btn.textContent = 'Stop';
+  streaming = true;
+
+  var bubble = addMessage('assistant', '');
+  bubble.classList.add('streaming');
+
+  try {
+    if (mode === 'local') {
+      await streamLocal(bubble);
+    } else {
+      await streamCloud(bubble);
+    }
+  } catch(e) {
+    if (e.name !== 'AbortError') {
+      bubble.textContent += '\n[Error: ' + e.message + ']';
+      showErr(e.message);
+    }
+  }
+
+  bubble.classList.remove('streaming');
+  var finalText = bubble.textContent;
+  messages.push({role:'assistant', content:finalText});
+  streaming = false;
+  abortCtrl = null;
+  btn.textContent = 'Send';
+  btn.disabled = false;
+}
+
+// ── Local streaming (OpenAI /v1/chat/completions SSE) ──────────────────────
+async function streamLocal(bubble) {
+  abortCtrl = new AbortController();
+  var sys = document.getElementById('sysprompt').value.trim();
+  var msgs = [];
+  if (sys) msgs.push({role:'system', content:sys});
+  msgs = msgs.concat(messages);
+
+  var resp = await fetch('http://127.0.0.1:' + localPort + '/v1/chat/completions', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({messages: msgs, stream: true, temperature: 0.7}),
+    signal: abortCtrl.signal
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+  var reader = resp.body.getReader();
+  var dec = new TextDecoder();
+  var buf = ''; var text = '';
+
+  while (true) {
+    var chunk = await reader.read();
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, {stream:true});
+    var lines = buf.split('\n');
+    buf = lines.pop();
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (!line.startsWith('data:')) continue;
+      var raw = line.slice(5).trim();
+      if (raw === '[DONE]') continue;
+      try {
+        var ev = JSON.parse(raw);
+        var delta = ev.choices && ev.choices[0] && ev.choices[0].delta;
+        if (delta && delta.content) {
+          text += delta.content;
+          bubble.textContent = text;
+          scrollBottom();
+        }
+        if (ev.usage) {
+          updateTokenBarLocal(ev.usage.prompt_tokens || 0, ev.usage.completion_tokens || 0);
+        }
+      } catch(e2) {}
+    }
+  }
+}
+
+// ── Cloud streaming (Anthropic /v1/messages SSE) ───────────────────────────
+async function streamCloud(bubble) {
+  var key = localStorage.getItem('anthropic_key') || '';
+  if (!key) { showApikeyScreen(); throw new Error('No API key'); }
+
+  abortCtrl = new AbortController();
+  var sys = document.getElementById('sysprompt').value.trim();
+  var modelId = document.getElementById('model-select').value;
+
+  var body = {
+    model: modelId,
+    max_tokens: 8192,
+    messages: messages.map(function(m){ return {role:m.role, content:m.content}; }),
+    stream: true
+  };
+  if (sys) body.system = sys;
+
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body),
+    signal: abortCtrl.signal
+  });
+
+  if (!resp.ok) {
+    var errText = await resp.text().catch(function(){ return ''; });
+    throw new Error('HTTP ' + resp.status + ': ' + errText.slice(0, 200));
+  }
+
+  var reader = resp.body.getReader();
+  var dec = new TextDecoder();
+  var buf = ''; var text = ''; var evType = '';
+
+  while (true) {
+    var chunk = await reader.read();
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, {stream:true});
+    var lines = buf.split('\n');
+    buf = lines.pop();
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.startsWith('event:')) {
+        evType = line.slice(6).trim();
+      } else if (line.startsWith('data:')) {
+        var raw = line.slice(5).trim();
+        try {
+          var ev = JSON.parse(raw);
+          if (evType === 'content_block_delta' && ev.delta && ev.delta.text) {
+            text += ev.delta.text;
+            bubble.textContent = text;
+            scrollBottom();
+          }
+          if (evType === 'message_start' && ev.message && ev.message.usage) {
+            var u = ev.message.usage;
+            tokIn += (u.input_tokens || 0);
+            tokCache += ((u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0));
+            refreshTokenBar();
+          }
+          if (evType === 'message_delta' && ev.usage) {
+            tokOut += (ev.usage.output_tokens || 0);
+            refreshTokenBar();
+          }
+        } catch(e2) {}
+      }
+    }
+  }
+}
+
+// ── Token bar ───────────────────────────────────────────────────────────────
+function resetTokenBar() {
+  tokIn = 0; tokOut = 0; tokCache = 0;
+  document.getElementById('tok-in').textContent = '0';
+  document.getElementById('tok-out').textContent = '0';
+  document.getElementById('tok-cache').textContent = '0';
+  document.getElementById('cache-item').style.display = 'none';
+}
+
+function updateTokenBarLocal(inp, out) {
+  document.getElementById('tok-in').textContent = inp;
+  document.getElementById('tok-out').textContent = out;
+  document.getElementById('token-bar').style.display = 'none'; // hidden in local mode
+}
+
+function refreshTokenBar() {
+  document.getElementById('tok-in').textContent  = fmt(tokIn);
+  document.getElementById('tok-out').textContent = fmt(tokOut);
+  if (tokCache > 0) {
+    document.getElementById('tok-cache').textContent = fmt(tokCache);
+    document.getElementById('cache-item').style.display = 'flex';
+  }
+  if (mode === 'cloud') document.getElementById('token-bar').style.display = 'flex';
+}
+
+function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1) + 'k' : String(n); }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function showErr(msg) {
+  var t = document.getElementById('err-toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(showErr._timer);
+  showErr._timer = setTimeout(function(){ t.style.display = 'none'; }, 5000);
+}
+</script>
+</body>
+</html>
