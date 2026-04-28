@@ -2,6 +2,7 @@ package com.multimodelchat;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +21,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -45,8 +47,6 @@ public class MainActivity extends Activity {
     private Process serverProcess;
     private String currentModelName = "";
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────────
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,23 +70,15 @@ public class MainActivity extends Activity {
         else super.onBackPressed();
     }
 
-    // ── Paths ──────────────────────────────────────────────────────────────────
-
-    private File binDir() {
-        return new File(getFilesDir(), "llama");
-    }
-
-    private File serverBinary() {
-        return new File(binDir(), "llama-server");
-    }
-
+    private File binDir() { return new File(getFilesDir(), "llama"); }
+    private File serverBinary() { return new File(binDir(), "llama-server"); }
     private File modelsDir() {
         File d = getExternalFilesDir("Models");
         if (d != null) d.mkdirs();
         return d;
     }
 
-    // ── Setup / Download ───────────────────────────────────────────────────────
+    // ── Setup ─────────────────────────────────────────────────────────────────
 
     private void showSetup() {
         LinearLayout root = darkLayout();
@@ -98,113 +90,116 @@ public class MainActivity extends Activity {
         root.addView(title);
 
         TextView desc = label(
-            "Downloads the AI runtime once (~60 MB).\nAfter that the app works fully offline with any GGUF model.",
+            "Downloads the AI runtime once (~60 MB).\nAfter that the app works fully offline.",
             0xFF94A3B8, 13);
         desc.setGravity(Gravity.CENTER);
         desc.setPadding(0, 20, 0, 32);
         root.addView(desc);
 
-        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        final ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         bar.setMax(100);
         bar.setVisibility(View.INVISIBLE);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         root.addView(bar, lp);
 
-        TextView status = label("", 0xFF94A3B8, 12);
+        final TextView status = label("", 0xFF94A3B8, 12);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, 8, 0, 20);
         status.setVisibility(View.INVISIBLE);
         root.addView(status);
 
-        Button btn = accentButton("Download Runtime");
-        btn.setOnClickListener(v -> {
-            btn.setEnabled(false);
-            btn.setAlpha(0.5f);
-            bar.setVisibility(View.VISIBLE);
-            status.setVisibility(View.VISIBLE);
-            runDownload(bar, status, btn);
+        final Button btn = accentButton("Download Runtime");
+        btn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                btn.setEnabled(false);
+                btn.setAlpha(0.5f);
+                bar.setVisibility(View.VISIBLE);
+                status.setVisibility(View.VISIBLE);
+                runDownload(bar, status, btn);
+            }
         });
         root.addView(btn);
-
         setContentView(root);
     }
 
-    private void runDownload(ProgressBar bar, TextView status, Button btn) {
-        new Thread(() -> {
-            try {
-                ui.post(() -> status.setText("Connecting…"));
-                HttpURLConnection conn = openConn(new URL(RELEASE_URL));
-                long total = conn.getContentLength();
+    private void runDownload(final ProgressBar bar, final TextView status, final Button btn) {
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    ui.post(new Runnable() { public void run() { status.setText("Connecting…"); } });
+                    HttpURLConnection conn = openConn(new URL(RELEASE_URL));
+                    final long total = conn.getContentLength();
+                    File tmp = new File(getCacheDir(), "llama.tar.gz");
+                    InputStream in = new BufferedInputStream(conn.getInputStream(), 65536);
+                    FileOutputStream out = new FileOutputStream(tmp);
+                    try {
+                        byte[] buf = new byte[65536];
+                        long done = 0; int n;
+                        while ((n = in.read(buf)) != -1) {
+                            out.write(buf, 0, n);
+                            done += n;
+                            final long d = done;
+                            final int pct = total > 0 ? (int)(d * 60 / total) : 0;
+                            ui.post(new Runnable() { public void run() {
+                                bar.setProgress(pct);
+                                status.setText("Downloading… " + d/1048576 + "/" + total/1048576 + " MB");
+                            }});
+                        }
+                    } finally { in.close(); out.close(); }
+                    conn.disconnect();
 
-                File tmp = new File(getCacheDir(), "llama.tar.gz");
-                try (InputStream in = new BufferedInputStream(conn.getInputStream(), 65536);
-                     FileOutputStream out = new FileOutputStream(tmp)) {
-                    byte[] buf = new byte[65536];
-                    long done = 0; int n;
-                    while ((n = in.read(buf)) != -1) {
-                        out.write(buf, 0, n);
-                        done += n;
-                        final long d = done;
-                        int pct = total > 0 ? (int)(d * 60 / total) : 0;
-                        ui.post(() -> {
-                            bar.setProgress(pct);
-                            status.setText("Downloading… " + d/1048576 + " / " + total/1048576 + " MB");
-                        });
-                    }
+                    ui.post(new Runnable() { public void run() {
+                        bar.setProgress(60); status.setText("Extracting…");
+                    }});
+
+                    File bd = binDir();
+                    bd.mkdirs();
+                    extractBinaries(tmp, bd, new Progress() {
+                        public void onProgress(final int pct) {
+                            ui.post(new Runnable() { public void run() {
+                                bar.setProgress(60 + pct * 40 / 100);
+                                status.setText("Extracting… " + pct + "%");
+                            }});
+                        }
+                    });
+                    serverBinary().setExecutable(true, false);
+                    tmp.delete();
+                    ui.post(new Runnable() { public void run() { pickModel(false); }});
+
+                } catch (final Exception e) {
+                    ui.post(new Runnable() { public void run() {
+                        status.setText("Error: " + e.getMessage());
+                        btn.setEnabled(true);
+                        btn.setAlpha(1f);
+                        btn.setText("Retry");
+                        bar.setProgress(0);
+                    }});
                 }
-                conn.disconnect();
-
-                ui.post(() -> { bar.setProgress(60); status.setText("Extracting…"); });
-
-                File bd = binDir();
-                bd.mkdirs();
-                extractBinaries(tmp, bd,
-                    pct -> ui.post(() -> {
-                        bar.setProgress(60 + pct * 40 / 100);
-                        status.setText("Extracting… " + pct + "%");
-                    }));
-
-                serverBinary().setExecutable(true, false);
-                tmp.delete();
-
-                ui.post(() -> pickModel(false));
-
-            } catch (Exception e) {
-                ui.post(() -> {
-                    status.setText("Error: " + e.getMessage());
-                    btn.setEnabled(true);
-                    btn.setAlpha(1f);
-                    btn.setText("Retry");
-                    bar.setProgress(0);
-                });
             }
         }).start();
     }
 
-    // ── Model Picker ───────────────────────────────────────────────────────────
+    // ── Model Picker ──────────────────────────────────────────────────────────
 
-    private void pickModel(boolean fromChat) {
+    private void pickModel(final boolean fromChat) {
         File dir = modelsDir();
-        List<File> models = new ArrayList<>();
+        final List<File> models = new ArrayList<File>();
         if (dir != null && dir.isDirectory()) {
-            File[] files = dir.listFiles(f -> {
-                String n = f.getName().toLowerCase();
-                return n.endsWith(".gguf");
+            File[] files = dir.listFiles(new FileFilter() {
+                public boolean accept(File f) { return f.getName().toLowerCase().endsWith(".gguf"); }
             });
-            if (files != null) {
-                Arrays.sort(files);
-                models.addAll(Arrays.asList(files));
-            }
+            if (files != null) { Arrays.sort(files); models.addAll(Arrays.asList(files)); }
         }
 
         if (models.isEmpty()) {
-            String path = dir != null ? dir.getAbsolutePath() : "(external storage unavailable)";
+            String path = dir != null ? dir.getAbsolutePath() : "(no external storage)";
             AlertDialog.Builder b = new AlertDialog.Builder(this)
                 .setTitle("No Models Found")
-                .setMessage("Copy your .gguf model files to:\n\n" + path +
-                    "\n\nUse any file manager app to place models there.")
-                .setPositiveButton("Refresh", (d, w) -> pickModel(fromChat))
+                .setMessage("Copy .gguf model files to:\n\n" + path)
+                .setPositiveButton("Refresh", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface d, int w) { pickModel(fromChat); }
+                })
                 .setCancelable(false);
             if (fromChat) b.setNegativeButton("Cancel", null);
             b.show();
@@ -216,67 +211,67 @@ public class MainActivity extends Activity {
 
         AlertDialog.Builder b = new AlertDialog.Builder(this)
             .setTitle("Choose a Model")
-            .setItems(names, (d, i) -> loadModel(models.get(i), fromChat))
+            .setItems(names, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int i) { loadModel(models.get(i), fromChat); }
+            })
             .setCancelable(fromChat);
-        if (!fromChat) b.setCancelable(false);
         b.show();
     }
 
-    // ── Server ─────────────────────────────────────────────────────────────────
+    // ── Server ────────────────────────────────────────────────────────────────
 
-    private void loadModel(File model, boolean fromChat) {
+    private void loadModel(final File model, final boolean fromChat) {
         if (fromChat && webView != null) {
-            // Show dialog overlay, keep WebView behind it
-            AlertDialog loading = new AlertDialog.Builder(this)
+            final AlertDialog loading = new AlertDialog.Builder(this)
                 .setTitle("Loading Model")
-                .setMessage("Loading " + model.getName() + "…\nThis may take 30–60 seconds.")
-                .setCancelable(false)
-                .show();
-
-            new Thread(() -> {
-                try {
-                    killServer();
-                    startServer(model);
-                    currentModelName = model.getName();
-                    ui.post(() -> {
-                        loading.dismiss();
-                        String safe = currentModelName.replace("\\", "\\\\").replace("'", "\\'");
-                        webView.evaluateJavascript(
-                            "if(typeof onModelReady==='function')onModelReady('" + safe + "')", null);
-                    });
-                } catch (Exception e) {
-                    ui.post(() -> {
-                        loading.dismiss();
-                        new AlertDialog.Builder(this)
-                            .setTitle("Failed to Load")
-                            .setMessage(e.getMessage() + "\n\nModel may need more RAM than available.")
-                            .setPositiveButton("Try Another", (d, w) -> pickModel(true))
-                            .setNegativeButton("Cancel", null)
-                            .show();
-                    });
+                .setMessage("Loading " + model.getName() + "…\nMay take up to 60 seconds.")
+                .setCancelable(false).show();
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        killServer(); startServer(model);
+                        currentModelName = model.getName();
+                        final String name = currentModelName;
+                        ui.post(new Runnable() { public void run() {
+                            loading.dismiss();
+                            String safe = name.replace("\\","\\\\").replace("'","\\'");
+                            webView.evaluateJavascript(
+                                "if(typeof onModelReady==='function')onModelReady('" + safe + "')", null);
+                        }});
+                    } catch (final Exception e) {
+                        ui.post(new Runnable() { public void run() {
+                            loading.dismiss();
+                            new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Load Failed")
+                                .setMessage(e.getMessage())
+                                .setPositiveButton("Try Another", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface d, int w) { pickModel(true); }
+                                }).show();
+                        }});
+                    }
                 }
             }).start();
         } else {
-            // First load — show full-screen spinner
             LinearLayout loading = darkLayout();
             loading.setGravity(Gravity.CENTER);
-            ProgressBar spin = new ProgressBar(this);
-            loading.addView(spin);
-            TextView txt = label("Loading " + model.getName() + "…", 0xFF94A3B8, 14);
+            loading.addView(new ProgressBar(this));
+            final TextView txt = label("Loading " + model.getName() + "…", 0xFF94A3B8, 14);
             txt.setGravity(Gravity.CENTER);
             txt.setPadding(0, 24, 0, 0);
             loading.addView(txt);
             setContentView(loading);
 
-            new Thread(() -> {
-                try {
-                    killServer();
-                    startServer(model);
-                    currentModelName = model.getName();
-                    ui.post(this::showChat);
-                } catch (Exception e) {
-                    ui.post(() -> txt.setText(
-                        "Error: " + e.getMessage() + "\n\nTap back and try a smaller model."));
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        killServer(); startServer(model);
+                        currentModelName = model.getName();
+                        ui.post(new Runnable() { public void run() { showChat(); }});
+                    } catch (final Exception e) {
+                        ui.post(new Runnable() { public void run() {
+                            txt.setText("Error: " + e.getMessage());
+                        }});
+                    }
                 }
             }).start();
         }
@@ -284,34 +279,34 @@ public class MainActivity extends Activity {
 
     private void startServer(File model) throws Exception {
         File bd = binDir();
-        List<String> cmd = new ArrayList<>(Arrays.asList(
-            serverBinary().getAbsolutePath(),
-            "-m", model.getAbsolutePath(),
-            "-c", "4096",
-            "--host", "127.0.0.1",
-            "--port", String.valueOf(SERVER_PORT),
-            "-n", "-1"
-        ));
+        List<String> cmd = new ArrayList<String>();
+        cmd.add(serverBinary().getAbsolutePath());
+        cmd.add("-m"); cmd.add(model.getAbsolutePath());
+        cmd.add("-c"); cmd.add("4096");
+        cmd.add("--host"); cmd.add("127.0.0.1");
+        cmd.add("--port"); cmd.add(String.valueOf(SERVER_PORT));
+        cmd.add("-n"); cmd.add("-1");
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.environment().put("LD_LIBRARY_PATH", bd.getAbsolutePath());
         pb.redirectErrorStream(true);
         serverProcess = pb.start();
 
-        Process p = serverProcess;
-        new Thread(() -> {
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(p.getInputStream()))) {
-                String line;
-                while ((line = br.readLine()) != null)
-                    android.util.Log.d("LlamaServer", line);
-            } catch (IOException ignored) {}
+        final Process p = serverProcess;
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    String line;
+                    while ((line = br.readLine()) != null)
+                        android.util.Log.d("LlamaServer", line);
+                } catch (IOException ignored) {}
+            }
         }).start();
 
-        long deadline = System.currentTimeMillis() + 120_000;
+        long deadline = System.currentTimeMillis() + 120000;
         while (System.currentTimeMillis() < deadline) {
-            if (!isAlive(serverProcess))
-                throw new Exception("Server process exited unexpectedly");
+            if (!isAlive(serverProcess)) throw new Exception("Server process exited");
             try {
                 HttpURLConnection c = (HttpURLConnection)
                     new URL("http://127.0.0.1:" + SERVER_PORT + "/health").openConnection();
@@ -323,14 +318,11 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
             Thread.sleep(500);
         }
-        throw new Exception("Server did not become ready within 2 minutes");
+        throw new Exception("Server did not start within 2 minutes");
     }
 
     private void killServer() {
-        if (serverProcess != null) {
-            serverProcess.destroy();
-            serverProcess = null;
-        }
+        if (serverProcess != null) { serverProcess.destroy(); serverProcess = null; }
     }
 
     private boolean isAlive(Process p) {
@@ -339,19 +331,17 @@ public class MainActivity extends Activity {
         catch (IllegalThreadStateException e) { return true; }
     }
 
-    // ── Chat UI ────────────────────────────────────────────────────────────────
+    // ── Chat UI ───────────────────────────────────────────────────────────────
 
     private void showChat() {
         setContentView(R.layout.activity_main);
         webView = (WebView) findViewById(R.id.webview);
-
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setAllowFileAccessFromFileURLs(true);
         s.setAllowUniversalAccessFromFileURLs(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-
         webView.addJavascriptInterface(new Bridge(), "Android");
         webView.setWebViewClient(new WebViewClient());
         webView.loadUrl("file:///android_asset/index.html");
@@ -359,20 +349,18 @@ public class MainActivity extends Activity {
 
     class Bridge {
         @JavascriptInterface
-        public void changeModel() { ui.post(() -> pickModel(true)); }
-
+        public void changeModel() { ui.post(new Runnable() { public void run() { pickModel(true); }}); }
         @JavascriptInterface
         public String getModelName() { return currentModelName; }
-
         @JavascriptInterface
         public int getLocalPort() { return SERVER_PORT; }
     }
 
-    // ── Tar.gz Extraction ──────────────────────────────────────────────────────
+    // ── Tar.gz Extraction ─────────────────────────────────────────────────────
 
     interface Progress { void onProgress(int pct); }
 
-    private static final Set<String> WANTED = new HashSet<>(Arrays.asList(
+    private static final Set<String> WANTED = new HashSet<String>(Arrays.asList(
         "llama-server", "libllama.so", "libllama-common.so", "libmtmd.so",
         "libggml.so", "libggml-base.so"
     ));
@@ -383,16 +371,15 @@ public class MainActivity extends Activity {
         byte[] hdr = new byte[512];
         byte[] longName = null;
 
-        try (GZIPInputStream gz = new GZIPInputStream(
-                new BufferedInputStream(new FileInputStream(archive), 65536))) {
+        GZIPInputStream gz = new GZIPInputStream(
+            new BufferedInputStream(new FileInputStream(archive), 65536));
+        try {
             while (readBlock(gz, hdr)) {
                 if (hdr[0] == 0) break;
-
                 String name = longName != null
                     ? new String(longName, "UTF-8").replace("\0", "").trim()
                     : new String(hdr, 0, 100, "UTF-8").replace("\0", "").trim();
                 longName = null;
-
                 char type = (char)(hdr[156] & 0xFF);
                 long size = parseOctal(hdr, 124, 12);
                 long padded = ((size + 511) / 512) * 512;
@@ -406,27 +393,26 @@ public class MainActivity extends Activity {
 
                 String base = new File(name).getName();
                 boolean want = WANTED.contains(base) || base.startsWith("libggml-cpu-android");
-
                 if ((type == '0' || type == '\0' || type == 0) && size > 0 && want) {
                     byte[] buf = new byte[65536];
                     long rem = size;
-                    try (FileOutputStream fos = new FileOutputStream(new File(dest, base))) {
+                    FileOutputStream fos = new FileOutputStream(new File(dest, base));
+                    try {
                         while (rem > 0) {
                             int r = gz.read(buf, 0, (int) Math.min(buf.length, rem));
                             if (r < 0) break;
                             fos.write(buf, 0, r);
                             rem -= r;
                             extracted += r;
-                            final long e = extracted;
-                            cb.onProgress((int)(e * 100 / estimated));
+                            cb.onProgress((int)(extracted * 100 / estimated));
                         }
-                    }
+                    } finally { fos.close(); }
                     skipBytes(gz, padded - size);
                 } else {
                     skipBytes(gz, padded);
                 }
             }
-        }
+        } finally { gz.close(); }
     }
 
     private boolean readBlock(InputStream in, byte[] buf) throws IOException {
@@ -443,7 +429,7 @@ public class MainActivity extends Activity {
         int off = 0;
         while (off < buf.length) {
             int n = in.read(buf, off, buf.length - off);
-            if (n < 0) throw new EOFException("Unexpected end of archive");
+            if (n < 0) throw new EOFException();
             off += n;
         }
     }
@@ -460,13 +446,10 @@ public class MainActivity extends Activity {
 
     private long parseOctal(byte[] b, int off, int len) {
         long v = 0;
-        for (int i = off; i < off + len; i++) {
+        for (int i = off; i < off + len; i++)
             if (b[i] >= '0' && b[i] <= '7') v = v * 8 + (b[i] - '0');
-        }
         return v;
     }
-
-    // ── HTTP ───────────────────────────────────────────────────────────────────
 
     private HttpURLConnection openConn(URL url) throws IOException {
         for (int i = 0; i < 10; i++) {
@@ -479,14 +462,10 @@ public class MainActivity extends Activity {
                 String loc = c.getHeaderField("Location");
                 c.disconnect();
                 url = new URL(loc);
-            } else {
-                return c;
-            }
+            } else return c;
         }
         throw new IOException("Too many redirects");
     }
-
-    // ── View helpers ───────────────────────────────────────────────────────────
 
     private LinearLayout darkLayout() {
         LinearLayout l = new LinearLayout(this);
@@ -497,17 +476,13 @@ public class MainActivity extends Activity {
 
     private TextView label(String text, int color, int sp) {
         TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextColor(color);
-        tv.setTextSize(sp);
+        tv.setText(text); tv.setTextColor(color); tv.setTextSize(sp);
         return tv;
     }
 
     private Button accentButton(String text) {
         Button b = new Button(this);
-        b.setText(text);
-        b.setBackgroundColor(0xFF6366f1);
-        b.setTextColor(0xFFFFFFFF);
+        b.setText(text); b.setBackgroundColor(0xFF6366f1); b.setTextColor(0xFFFFFFFF);
         return b;
     }
 }
