@@ -143,9 +143,11 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String getDefaultModelsPath() {
-            File d = getExternalFilesDir("Models");
-            if (d != null) { d.mkdirs(); return d.getAbsolutePath(); }
-            return getFilesDir().getAbsolutePath() + "/Models";
+            File dl = new File(Environment.getExternalStorageDirectory(), "Download");
+            if (dl.isDirectory()) return dl.getAbsolutePath();
+            File ext = getExternalFilesDir(null);
+            if (ext != null) return ext.getAbsolutePath();
+            return Environment.getExternalStorageDirectory().getAbsolutePath();
         }
 
         @JavascriptInterface
