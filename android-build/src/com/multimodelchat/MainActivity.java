@@ -1,22 +1,14 @@
 package com.multimodelchat;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Gravity;
-import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -51,11 +43,17 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        if (serverBinary().exists()) {
-            pickModel(false);
-        } else {
-            showSetup();
-        }
+        setContentView(R.layout.activity_main);
+        webView = (WebView) findViewById(R.id.webview);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setAllowFileAccessFromFileURLs(true);
+        s.setAllowUniversalAccessFromFileURLs(true);
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webView.addJavascriptInterface(new Bridge(), "Android");
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("file:///android_asset/index.html");
     }
 
     @Override
@@ -72,210 +70,131 @@ public class MainActivity extends Activity {
 
     private File binDir() { return new File(getFilesDir(), "llama"); }
     private File serverBinary() { return new File(binDir(), "llama-server"); }
-    private File modelsDir() {
-        File d = getExternalFilesDir("Models");
-        if (d != null) d.mkdirs();
-        return d;
-    }
 
-    // ── Setup ─────────────────────────────────────────────────────────────────
-
-    private void showSetup() {
-        LinearLayout root = darkLayout();
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(64, 64, 64, 64);
-
-        TextView title = label("First-Time Setup", 0xFFE2E8F0, 20);
-        title.setGravity(Gravity.CENTER);
-        root.addView(title);
-
-        TextView desc = label(
-            "Downloads the AI runtime once (~60 MB).\nAfter that the app works fully offline.",
-            0xFF94A3B8, 13);
-        desc.setGravity(Gravity.CENTER);
-        desc.setPadding(0, 20, 0, 32);
-        root.addView(desc);
-
-        final ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setMax(100);
-        bar.setVisibility(View.INVISIBLE);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        root.addView(bar, lp);
-
-        final TextView status = label("", 0xFF94A3B8, 12);
-        status.setGravity(Gravity.CENTER);
-        status.setPadding(0, 8, 0, 20);
-        status.setVisibility(View.INVISIBLE);
-        root.addView(status);
-
-        final Button btn = accentButton("Download Runtime");
-        btn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                btn.setEnabled(false);
-                btn.setAlpha(0.5f);
-                bar.setVisibility(View.VISIBLE);
-                status.setVisibility(View.VISIBLE);
-                runDownload(bar, status, btn);
+    private void js(final String code) {
+        ui.post(new Runnable() {
+            public void run() {
+                if (webView != null) webView.evaluateJavascript(code, null);
             }
         });
-        root.addView(btn);
-        setContentView(root);
     }
 
-    private void runDownload(final ProgressBar bar, final TextView status, final Button btn) {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ui.post(new Runnable() { public void run() { status.setText("Connecting…"); } });
-                    HttpURLConnection conn = openConn(new URL(RELEASE_URL));
-                    final long total = conn.getContentLength();
-                    File tmp = new File(getCacheDir(), "llama.tar.gz");
-                    InputStream in = new BufferedInputStream(conn.getInputStream(), 65536);
-                    FileOutputStream out = new FileOutputStream(tmp);
-                    try {
-                        byte[] buf = new byte[65536];
-                        long done = 0; int n;
-                        while ((n = in.read(buf)) != -1) {
-                            out.write(buf, 0, n);
-                            done += n;
-                            final long d = done;
-                            final int pct = total > 0 ? (int)(d * 60 / total) : 0;
-                            ui.post(new Runnable() { public void run() {
-                                bar.setProgress(pct);
-                                status.setText("Downloading… " + d/1048576 + "/" + total/1048576 + " MB");
-                            }});
-                        }
-                    } finally { in.close(); out.close(); }
-                    conn.disconnect();
+    // ── Bridge ────────────────────────────────────────────────────────────────
 
-                    ui.post(new Runnable() { public void run() {
-                        bar.setProgress(60); status.setText("Extracting…");
-                    }});
+    class Bridge {
+        @JavascriptInterface
+        public String getStatus() {
+            if (!serverBinary().exists()) return "needs_setup";
+            if (currentModelName.isEmpty()) return "needs_model";
+            return "ready:" + currentModelName;
+        }
 
-                    File bd = binDir();
-                    bd.mkdirs();
-                    extractBinaries(tmp, bd, new Progress() {
-                        public void onProgress(final int pct) {
-                            ui.post(new Runnable() { public void run() {
-                                bar.setProgress(60 + pct * 40 / 100);
-                                status.setText("Extracting… " + pct + "%");
-                            }});
-                        }
-                    });
-                    serverBinary().setExecutable(true, false);
-                    tmp.delete();
-                    ui.post(new Runnable() { public void run() { pickModel(false); }});
+        @JavascriptInterface
+        public String getDefaultModelsPath() {
+            File d = getExternalFilesDir("Models");
+            if (d != null) { d.mkdirs(); return d.getAbsolutePath(); }
+            return getFilesDir().getAbsolutePath() + "/Models";
+        }
 
-                } catch (final Exception e) {
-                    ui.post(new Runnable() { public void run() {
-                        status.setText("Error: " + e.getMessage());
-                        btn.setEnabled(true);
-                        btn.setAlpha(1f);
-                        btn.setText("Retry");
-                        bar.setProgress(0);
-                    }});
-                }
-            }
-        }).start();
-    }
-
-    // ── Model Picker ──────────────────────────────────────────────────────────
-
-    private void pickModel(final boolean fromChat) {
-        File dir = modelsDir();
-        final List<File> models = new ArrayList<File>();
-        if (dir != null && dir.isDirectory()) {
+        @JavascriptInterface
+        public String getModelList(final String folderPath) {
+            File dir = new File(folderPath);
+            if (!dir.isDirectory()) return "";
             File[] files = dir.listFiles(new FileFilter() {
-                public boolean accept(File f) { return f.getName().toLowerCase().endsWith(".gguf"); }
+                public boolean accept(File f) {
+                    return f.isFile() && f.getName().toLowerCase().endsWith(".gguf");
+                }
             });
-            if (files != null) { Arrays.sort(files); models.addAll(Arrays.asList(files)); }
+            if (files == null || files.length == 0) return "";
+            Arrays.sort(files);
+            StringBuilder sb = new StringBuilder();
+            for (File f : files) {
+                if (sb.length() > 0) sb.append("\n");
+                sb.append(f.getName()).append("|").append(f.getAbsolutePath());
+            }
+            return sb.toString();
         }
 
-        if (models.isEmpty()) {
-            String path = dir != null ? dir.getAbsolutePath() : "(no external storage)";
-            AlertDialog.Builder b = new AlertDialog.Builder(this)
-                .setTitle("No Models Found")
-                .setMessage("Copy .gguf model files to:\n\n" + path)
-                .setPositiveButton("Refresh", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface d, int w) { pickModel(fromChat); }
-                })
-                .setCancelable(false);
-            if (fromChat) b.setNegativeButton("Cancel", null);
-            b.show();
-            return;
+        @JavascriptInterface
+        public void startDownload() {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        js("onDownloadProgress(0,'Connecting…')");
+                        HttpURLConnection conn = openConn(new URL(RELEASE_URL));
+                        final long total = conn.getContentLength();
+                        File tmp = new File(getCacheDir(), "llama.tar.gz");
+                        InputStream in = new BufferedInputStream(conn.getInputStream(), 65536);
+                        FileOutputStream fout = new FileOutputStream(tmp);
+                        try {
+                            byte[] buf = new byte[65536];
+                            long done = 0; int n;
+                            while ((n = in.read(buf)) != -1) {
+                                fout.write(buf, 0, n);
+                                done += n;
+                                final long d = done;
+                                final int pct = total > 0 ? (int)(d * 60 / total) : 0;
+                                js("onDownloadProgress(" + pct + ",'Downloading… " + d/1048576 + "/" + total/1048576 + " MB')");
+                            }
+                        } finally { in.close(); fout.close(); }
+                        conn.disconnect();
+
+                        js("onDownloadProgress(60,'Extracting…')");
+                        File bd = binDir();
+                        bd.mkdirs();
+                        extractBinaries(tmp, bd, new Progress() {
+                            public void onProgress(int pct) {
+                                js("onDownloadProgress(" + (60 + pct * 40 / 100) + ",'Extracting… " + pct + "%')");
+                            }
+                        });
+                        serverBinary().setExecutable(true, false);
+                        tmp.delete();
+                        js("onDownloadDone()");
+
+                    } catch (final Exception e) {
+                        String raw = e.getMessage() != null ? e.getMessage() : "Unknown error";
+                        String msg = raw.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
+                        js("onDownloadError('" + msg + "')");
+                    }
+                }
+            }).start();
         }
 
-        String[] names = new String[models.size()];
-        for (int i = 0; i < models.size(); i++) names[i] = models.get(i).getName();
+        @JavascriptInterface
+        public void loadModel(final String path) {
+            final String name = new File(path).getName();
+            js("onModelLoading('" + name.replace("'", "\\'") + "')");
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        killServer();
+                        startServer(new File(path));
+                        currentModelName = name;
+                        js("onModelReady('" + name.replace("'", "\\'") + "')");
+                    } catch (final Exception e) {
+                        String raw = e.getMessage() != null ? e.getMessage() : "Unknown error";
+                        String msg = raw.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
+                        js("onModelError('" + msg + "')");
+                    }
+                }
+            }).start();
+        }
 
-        AlertDialog.Builder b = new AlertDialog.Builder(this)
-            .setTitle("Choose a Model")
-            .setItems(names, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface d, int i) { loadModel(models.get(i), fromChat); }
-            })
-            .setCancelable(fromChat);
-        b.show();
+        @JavascriptInterface
+        public void changeModel() {
+            killServer();
+            currentModelName = "";
+            js("onShowModelPicker()");
+        }
+
+        @JavascriptInterface
+        public String getModelName() { return currentModelName; }
+
+        @JavascriptInterface
+        public int getLocalPort() { return SERVER_PORT; }
     }
 
     // ── Server ────────────────────────────────────────────────────────────────
-
-    private void loadModel(final File model, final boolean fromChat) {
-        if (fromChat && webView != null) {
-            final AlertDialog loading = new AlertDialog.Builder(this)
-                .setTitle("Loading Model")
-                .setMessage("Loading " + model.getName() + "…\nMay take up to 60 seconds.")
-                .setCancelable(false).show();
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        killServer(); startServer(model);
-                        currentModelName = model.getName();
-                        final String name = currentModelName;
-                        ui.post(new Runnable() { public void run() {
-                            loading.dismiss();
-                            String safe = name.replace("\\","\\\\").replace("'","\\'");
-                            webView.evaluateJavascript(
-                                "if(typeof onModelReady==='function')onModelReady('" + safe + "')", null);
-                        }});
-                    } catch (final Exception e) {
-                        ui.post(new Runnable() { public void run() {
-                            loading.dismiss();
-                            new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Load Failed")
-                                .setMessage(e.getMessage())
-                                .setPositiveButton("Try Another", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface d, int w) { pickModel(true); }
-                                }).show();
-                        }});
-                    }
-                }
-            }).start();
-        } else {
-            LinearLayout loading = darkLayout();
-            loading.setGravity(Gravity.CENTER);
-            loading.addView(new ProgressBar(this));
-            final TextView txt = label("Loading " + model.getName() + "…", 0xFF94A3B8, 14);
-            txt.setGravity(Gravity.CENTER);
-            txt.setPadding(0, 24, 0, 0);
-            loading.addView(txt);
-            setContentView(loading);
-
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        killServer(); startServer(model);
-                        currentModelName = model.getName();
-                        ui.post(new Runnable() { public void run() { showChat(); }});
-                    } catch (final Exception e) {
-                        ui.post(new Runnable() { public void run() {
-                            txt.setText("Error: " + e.getMessage());
-                        }});
-                    }
-                }
-            }).start();
-        }
-    }
 
     private void startServer(File model) throws Exception {
         File bd = binDir();
@@ -329,31 +248,6 @@ public class MainActivity extends Activity {
         if (p == null) return false;
         try { p.exitValue(); return false; }
         catch (IllegalThreadStateException e) { return true; }
-    }
-
-    // ── Chat UI ───────────────────────────────────────────────────────────────
-
-    private void showChat() {
-        setContentView(R.layout.activity_main);
-        webView = (WebView) findViewById(R.id.webview);
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setAllowFileAccessFromFileURLs(true);
-        s.setAllowUniversalAccessFromFileURLs(true);
-        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        webView.addJavascriptInterface(new Bridge(), "Android");
-        webView.setWebViewClient(new WebViewClient());
-        webView.loadUrl("file:///android_asset/index.html");
-    }
-
-    class Bridge {
-        @JavascriptInterface
-        public void changeModel() { ui.post(new Runnable() { public void run() { pickModel(true); }}); }
-        @JavascriptInterface
-        public String getModelName() { return currentModelName; }
-        @JavascriptInterface
-        public int getLocalPort() { return SERVER_PORT; }
     }
 
     // ── Tar.gz Extraction ─────────────────────────────────────────────────────
@@ -465,24 +359,5 @@ public class MainActivity extends Activity {
             } else return c;
         }
         throw new IOException("Too many redirects");
-    }
-
-    private LinearLayout darkLayout() {
-        LinearLayout l = new LinearLayout(this);
-        l.setOrientation(LinearLayout.VERTICAL);
-        l.setBackgroundColor(0xFF0f1117);
-        return l;
-    }
-
-    private TextView label(String text, int color, int sp) {
-        TextView tv = new TextView(this);
-        tv.setText(text); tv.setTextColor(color); tv.setTextSize(sp);
-        return tv;
-    }
-
-    private Button accentButton(String text) {
-        Button b = new Button(this);
-        b.setText(text); b.setBackgroundColor(0xFF6366f1); b.setTextColor(0xFFFFFFFF);
-        return b;
     }
 }

@@ -143,9 +143,79 @@
   #err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
     background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;
     font-size:12px;display:none;z-index:300;max-width:90%;text-align:center}
+
+  /* Full-screen state screens */
+  .screen{display:none;position:fixed;inset:0;z-index:400;background:var(--bg);
+    flex-direction:column;align-items:center;justify-content:center;
+    padding:32px 24px;gap:18px;text-align:center}
+  .screen.active{display:flex}
+  .screen-icon{font-size:40px;opacity:.7}
+  .screen h2{font-size:20px;font-weight:700;color:var(--text)}
+  .screen p{font-size:13px;color:var(--muted);max-width:300px;line-height:1.5}
+  .screen-btn{padding:12px 28px;border-radius:10px;border:none;background:var(--accent);
+    color:#fff;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:300px}
+  .screen-btn:hover{background:var(--accent2)}
+  .screen-btn.sec{background:transparent;border:1px solid var(--border);color:var(--muted)}
+  .screen-btn.sec:hover{border-color:var(--accent2);color:var(--accent2)}
+  #dl-bar-wrap{width:100%;max-width:300px;background:var(--surface2);
+    border-radius:6px;height:8px;overflow:hidden}
+  #dl-bar{height:100%;background:var(--accent);width:0;transition:width .3s}
+  #dl-status{font-size:12px;color:var(--muted)}
+  .model-list{width:100%;max-width:340px;display:flex;flex-direction:column;
+    gap:8px;max-height:40vh;overflow-y:auto}
+  .model-item{background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:12px 16px;cursor:pointer;text-align:left;
+    font-size:13px;color:var(--text);transition:border-color .15s}
+  .model-item:hover{border-color:var(--accent2)}
+  .model-item small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+  .folder-row{display:flex;gap:6px;width:100%;max-width:340px;align-items:center}
+  .folder-input{flex:1;background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;padding:8px 10px;color:var(--text);font-size:11px;
+    font-family:monospace;min-width:0}
+  .folder-input:focus{outline:none;border-color:var(--accent)}
+  .folder-btn{padding:8px 12px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px;
+    white-space:nowrap;flex-shrink:0}
+  .folder-btn:hover{background:var(--surface2)}
 </style>
 </head>
 <body>
+
+<!-- Setup screen -->
+<div id="screen-setup" class="screen">
+  <div class="screen-icon">🤖</div>
+  <h2>First-Time Setup</h2>
+  <p>Download the AI runtime (~60 MB). This only happens once — after that the app works fully offline with any GGUF model.</p>
+  <button class="screen-btn" onclick="startDownload()">Download Runtime</button>
+</div>
+
+<!-- Download progress screen -->
+<div id="screen-download" class="screen">
+  <div class="screen-icon">⬇️</div>
+  <h2>Downloading Runtime</h2>
+  <div id="dl-bar-wrap"><div id="dl-bar"></div></div>
+  <div id="dl-status">Starting…</div>
+</div>
+
+<!-- Model picker screen -->
+<div id="screen-picker" class="screen">
+  <div class="screen-icon">📂</div>
+  <h2>Choose a Model</h2>
+  <div class="folder-row">
+    <input class="folder-input" id="folder-input" type="text" placeholder="/path/to/models" spellcheck="false" autocapitalize="none"/>
+    <button class="folder-btn" onclick="rescanFolder()">Scan</button>
+  </div>
+  <div id="model-list" class="model-list"></div>
+  <button class="screen-btn sec" onclick="rescanFolder()">↻ Refresh</button>
+</div>
+
+<!-- Loading screen -->
+<div id="screen-loading" class="screen">
+  <div class="screen-icon">⏳</div>
+  <h2 id="loading-title">Loading Model…</h2>
+  <p id="loading-msg">This may take 30–60 seconds depending on model size.</p>
+</div>
+
 <div id="app">
 
   <!-- Header -->
@@ -234,11 +304,11 @@
 
 <script>
 // ── Android bridge ──────────────────────────────────────────────────────────
-const AB = window.Android || null;
-const localPort = AB ? AB.getLocalPort() : 8080;
+var AB = window.Android || null;
+var localPort = AB ? AB.getLocalPort() : 8080;
 
 // ── Constants ───────────────────────────────────────────────────────────────
-const BUILTIN_MODELS = [
+var BUILTIN_MODELS = [
   {id:'claude-opus-4-20250514',  label:'Opus 4.7'},
   {id:'claude-opus-4-5',         label:'Opus 4.6'},
   {id:'claude-sonnet-4-5',       label:'Sonnet 4.6'},
@@ -246,35 +316,154 @@ const BUILTIN_MODELS = [
 ];
 
 // ── State ───────────────────────────────────────────────────────────────────
-let mode = 'local';
-let messages = [];
-let streaming = false;
-let abortCtrl = null;
-let tokIn = 0, tokOut = 0, tokCache = 0;
+var mode = 'local';
+var messages = [];
+var streaming = false;
+var abortCtrl = null;
+var tokIn = 0, tokOut = 0, tokCache = 0;
+
+// ── Screen management ───────────────────────────────────────────────────────
+var SCREENS = ['screen-setup','screen-download','screen-picker','screen-loading'];
+
+function showScreen(id) {
+  for (var i = 0; i < SCREENS.length; i++) {
+    var el = document.getElementById(SCREENS[i]);
+    if (el) el.classList.toggle('active', SCREENS[i] === id);
+  }
+}
+
+function hideScreens() {
+  for (var i = 0; i < SCREENS.length; i++) {
+    var el = document.getElementById(SCREENS[i]);
+    if (el) el.classList.remove('active');
+  }
+}
 
 // ── Boot ────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
   populateModelSelect();
-  // Restore saved model
-  const saved = localStorage.getItem('cloud_model');
+  var saved = localStorage.getItem('cloud_model');
   if (saved) {
-    const sel = document.getElementById('model-select');
+    var sel = document.getElementById('model-select');
     if (sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
   }
-  // Show local mode initially
-  applyMode('local');
-  // Update local model name
-  if (AB) {
-    const name = AB.getModelName();
-    setLocalModelName(name || 'No model loaded');
-  } else {
-    setLocalModelName('Browser mode (no Android bridge)');
+
+  if (!AB) {
+    hideScreens();
+    applyMode('local');
+    setLocalModelName('Browser mode');
+    return;
+  }
+
+  var status = AB.getStatus();
+  if (status === 'needs_setup') {
+    showScreen('screen-setup');
+  } else if (status === 'needs_model') {
+    showScreen('screen-picker');
+    loadFolderInput();
+    rescanFolder();
+  } else if (status.indexOf('ready:') === 0) {
+    var name = status.slice(6);
+    hideScreens();
+    applyMode('local');
+    setLocalModelName(name);
+    document.getElementById('change-model-btn').style.display = 'inline-block';
   }
 });
 
-// ── onModelReady — called by Java via evaluateJavascript ───────────────────
+// ── Download callbacks (called by Java via evaluateJavascript) ──────────────
+function startDownload() {
+  showScreen('screen-download');
+  document.getElementById('dl-bar').style.width = '0%';
+  document.getElementById('dl-status').textContent = 'Starting…';
+  if (AB) AB.startDownload();
+}
+
+function onDownloadProgress(pct, msg) {
+  document.getElementById('dl-bar').style.width = pct + '%';
+  document.getElementById('dl-status').textContent = msg;
+}
+
+function onDownloadDone() {
+  showScreen('screen-picker');
+  loadFolderInput();
+  rescanFolder();
+}
+
+function onDownloadError(msg) {
+  showScreen('screen-setup');
+  showErr('Download failed: ' + msg);
+}
+
+// ── Model picker ─────────────────────────────────────────────────────────────
+function loadFolderInput() {
+  var inp = document.getElementById('folder-input');
+  var saved = localStorage.getItem('models_folder');
+  if (!saved && AB) saved = AB.getDefaultModelsPath();
+  inp.value = saved || '';
+}
+
+function rescanFolder() {
+  var inp = document.getElementById('folder-input');
+  var folder = inp.value.trim();
+  var list = document.getElementById('model-list');
+  if (!folder) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Enter a folder path above.</div>';
+    return;
+  }
+  localStorage.setItem('models_folder', folder);
+  list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Scanning…</div>';
+  var raw = AB ? AB.getModelList(folder) : '';
+  list.innerHTML = '';
+  if (!raw) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">No .gguf files found. Copy model files to this folder and tap Refresh.</div>';
+    return;
+  }
+  var lines = raw.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    if (!lines[i]) continue;
+    var parts = lines[i].split('|');
+    var name = parts[0];
+    var path = parts.length > 1 ? parts[1] : parts[0];
+    var item = document.createElement('button');
+    item.className = 'model-item';
+    item.innerHTML = '<strong>' + esc(name) + '</strong>';
+    item.onclick = (function(p) { return function() { selectModel(p); }; })(path);
+    list.appendChild(item);
+  }
+}
+
+function selectModel(path) {
+  if (AB) AB.loadModel(path);
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Model loading callbacks (called by Java via evaluateJavascript) ──────────
+function onModelLoading(name) {
+  showScreen('screen-loading');
+  document.getElementById('loading-title').textContent = 'Loading Model…';
+  document.getElementById('loading-msg').textContent = 'Loading ' + name + '\nThis may take 30–60 seconds.';
+}
+
 function onModelReady(name) {
+  hideScreens();
+  applyMode('local');
   setLocalModelName(name);
+  document.getElementById('change-model-btn').style.display = 'inline-block';
+}
+
+function onModelError(msg) {
+  showScreen('screen-picker');
+  showErr('Failed to load: ' + msg);
+}
+
+function onShowModelPicker() {
+  showScreen('screen-picker');
+  loadFolderInput();
+  rescanFolder();
 }
 
 function setLocalModelName(name) {
