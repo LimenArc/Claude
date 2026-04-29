@@ -303,6 +303,65 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String findAllGgufFiles() {
+            StringBuilder sb = new StringBuilder();
+            android.database.Cursor cursor = null;
+            try {
+                String[] proj = {
+                    android.provider.MediaStore.Files.FileColumns.DISPLAY_NAME,
+                    android.provider.MediaStore.Files.FileColumns.DATA
+                };
+                String sel = android.provider.MediaStore.Files.FileColumns.DISPLAY_NAME + " LIKE ?";
+                android.net.Uri vol = android.provider.MediaStore.Files.getContentUri("external");
+                cursor = getContentResolver().query(vol, proj, sel, new String[]{"%.gguf"},
+                    android.provider.MediaStore.Files.FileColumns.DISPLAY_NAME + " ASC");
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        String name = cursor.getString(0);
+                        String path = cursor.getString(1);
+                        if (name != null && path != null && !path.isEmpty()) {
+                            if (sb.length() > 0) sb.append("\n");
+                            sb.append(name).append("|").append(path);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                android.util.Log.e("MediaStore", "findAllGgufFiles: " + e.getMessage());
+            } finally {
+                if (cursor != null) cursor.close();
+            }
+            return sb.toString();
+        }
+
+        @JavascriptInterface
+        public String getStorageRoots() {
+            StringBuilder sb = new StringBuilder();
+            File ext = Environment.getExternalStorageDirectory();
+            sb.append("getExternalStorageDirectory: ")
+              .append(ext != null ? ext.getAbsolutePath() : "null")
+              .append(" exists=").append(ext != null && ext.exists()).append("\n");
+            File[] dirs = getExternalFilesDirs(null);
+            if (dirs != null) {
+                for (int i = 0; i < dirs.length; i++) {
+                    if (dirs[i] != null) {
+                        sb.append("externalFilesDir[").append(i).append("]: ")
+                          .append(dirs[i].getAbsolutePath())
+                          .append(" exists=").append(dirs[i].exists()).append("\n");
+                    }
+                }
+            }
+            String[] probes = {
+                "/storage/emulated/0", "/storage/emulated/0/Models",
+                "/storage/emulated/0/Download", "/sdcard", "/sdcard/Models"
+            };
+            for (String p : probes) {
+                File f = new File(p);
+                sb.append("probe ").append(p).append(": exists=").append(f.exists()).append("\n");
+            }
+            return sb.toString();
+        }
+
+        @JavascriptInterface
         public String debugPath(String path) {
             StringBuilder sb = new StringBuilder();
             try {
@@ -329,8 +388,6 @@ public class MainActivity extends Activity {
                     } catch (Exception e2) {
                         sb.append("storageManager: reflection failed\n");
                     }
-                } else {
-                    sb.append("API < 30, no storageManager needed\n");
                 }
             } catch (Exception e) {
                 sb.append("error: ").append(e.getMessage()).append("\n");

@@ -208,6 +208,7 @@
   </div>
   <div id="model-list" class="model-list"></div>
   <button class="screen-btn sec" onclick="rescanFolder()">↻ Refresh</button>
+  <button class="screen-btn sec" onclick="searchEntirePhone()" style="margin-top:4px">🔍 Search entire phone</button>
 </div>
 
 <!-- Loading screen -->
@@ -522,6 +523,35 @@ function onFolderSelected(path) {
 
 function onFolderSelectFailed() {
   showErr('Could not read folder path from picker — try typing it manually');
+}
+
+function searchEntirePhone() {
+  var list = document.getElementById('model-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Searching entire device…</div>';
+  var raw = AB ? AB.findAllGgufFiles() : '';
+  list.innerHTML = '';
+  if (!raw) {
+    var roots = AB ? AB.getStorageRoots() : '';
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;line-height:1.6">' +
+      'No .gguf files found on device.<br>' +
+      '<pre style="margin-top:8px;font-size:10px;background:var(--surface2);padding:8px;' +
+      'border-radius:6px;white-space:pre-wrap;word-break:break-all;text-align:left">' +
+      esc(roots) + '</pre></div>';
+    return;
+  }
+  var lines = raw.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    if (!lines[i]) continue;
+    var parts = lines[i].split('|');
+    var name = parts[0];
+    var path = parts.length > 1 ? parts[1] : parts[0];
+    var item = document.createElement('button');
+    item.className = 'model-item';
+    item.innerHTML = '<strong>' + esc(name) + '</strong>' +
+      '<small>' + esc(path) + '</small>';
+    item.onclick = (function(p) { return function() { selectModel(p); }; })(path);
+    list.appendChild(item);
+  }
 }
 
 function setLocalModelName(name) {
