@@ -298,6 +298,11 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public boolean pathExists(String path) {
+            return new File(path).exists();
+        }
+
+        @JavascriptInterface
         public String debugPath(String path) {
             StringBuilder sb = new StringBuilder();
             try {

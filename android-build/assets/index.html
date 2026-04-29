@@ -400,6 +400,10 @@ function onDownloadError(msg) {
 function loadFolderInput() {
   var inp = document.getElementById('folder-input');
   var saved = localStorage.getItem('models_folder');
+  if (saved && AB && !AB.pathExists(saved)) {
+    localStorage.removeItem('models_folder');
+    saved = null;
+  }
   if (!saved && AB) saved = AB.getDefaultModelsPath();
   inp.value = saved || '';
 }
@@ -419,13 +423,21 @@ function rescanFolder() {
   list.innerHTML = '';
 
   if (!raw) {
-    var dbg = AB ? AB.debugPath(folder) : 'no bridge';
+    var folderExists = AB ? AB.pathExists(folder) : true;
     var needsPerm = AB && AB.getStorageStatus() !== 'ok';
-    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;line-height:1.6">' +
-      'No .gguf files found.<br>' +
-      '<pre style="margin-top:8px;font-size:10px;background:var(--surface2);padding:8px;' +
-      'border-radius:6px;white-space:pre-wrap;word-break:break-all;text-align:left">' +
-      esc(dbg) + '</pre></div>';
+    var msg, hint;
+    if (!folderExists) {
+      msg = 'Folder not found: ' + folder;
+      hint = 'Tap 📁 to browse to where your model files are stored.';
+    } else if (needsPerm) {
+      msg = 'Cannot read this folder.';
+      hint = 'Tap Grant Storage Access below, then come back and scan again.';
+    } else {
+      msg = 'No .gguf files in this folder.';
+      hint = 'Make sure your model files end in .gguf, or tap 📁 to pick a different folder.';
+    }
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px;line-height:1.7">' +
+      '<strong style="color:var(--text)">' + esc(msg) + '</strong><br>' + esc(hint) + '</div>';
     if (needsPerm) {
       var btn = document.createElement('button');
       btn.textContent = 'Grant Storage Access';
