@@ -419,14 +419,13 @@ function rescanFolder() {
   list.innerHTML = '';
 
   if (!raw) {
+    var dbg = AB ? AB.debugPath(folder) : 'no bridge';
     var needsPerm = AB && AB.getStorageStatus() !== 'ok';
-    var msg = 'No .gguf files found in:<br><code style="font-size:10px;word-break:break-all">' +
-      esc(folder) + '</code>';
-    if (needsPerm) {
-      msg += '<br><br>Storage permission required to read this folder.';
-    }
     list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;line-height:1.6">' +
-      msg + '</div>';
+      'No .gguf files found.<br>' +
+      '<pre style="margin-top:8px;font-size:10px;background:var(--surface2);padding:8px;' +
+      'border-radius:6px;white-space:pre-wrap;word-break:break-all;text-align:left">' +
+      esc(dbg) + '</pre></div>';
     if (needsPerm) {
       var btn = document.createElement('button');
       btn.textContent = 'Grant Storage Access';
@@ -507,6 +506,10 @@ function browseFolders() {
 function onFolderSelected(path) {
   document.getElementById('folder-input').value = path;
   rescanFolder();
+}
+
+function onFolderSelectFailed() {
+  showErr('Could not read folder path from picker — try typing it manually');
 }
 
 function setLocalModelName(name) {

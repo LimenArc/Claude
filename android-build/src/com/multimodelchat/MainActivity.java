@@ -99,6 +99,8 @@ public class MainActivity extends Activity {
             String path = uriToPath(data.getData());
             if (path != null) {
                 js("onFolderSelected('" + path.replace("'", "\\'") + "')");
+            } else {
+                js("onFolderSelectFailed()");
             }
         }
     }
@@ -293,6 +295,42 @@ public class MainActivity extends Activity {
                     startActivityForResult(intent, REQUEST_FOLDER);
                 }
             });
+        }
+
+        @JavascriptInterface
+        public String debugPath(String path) {
+            StringBuilder sb = new StringBuilder();
+            try {
+                File f = new File(path);
+                sb.append("path: ").append(path).append("\n");
+                sb.append("exists: ").append(f.exists()).append("\n");
+                sb.append("isDir: ").append(f.isDirectory()).append("\n");
+                sb.append("canRead: ").append(f.canRead()).append("\n");
+                if (f.isDirectory()) {
+                    File[] all = f.listFiles();
+                    sb.append("listFiles: ").append(all == null ? "null" : all.length + " items").append("\n");
+                    if (all != null) {
+                        int gguf = 0;
+                        for (File ff : all) {
+                            if (ff.getName().toLowerCase().endsWith(".gguf")) gguf++;
+                        }
+                        sb.append("gguf count: ").append(gguf).append("\n");
+                    }
+                }
+                if (Build.VERSION.SDK_INT >= 30) {
+                    try {
+                        java.lang.reflect.Method m = Environment.class.getMethod("isExternalStorageManager");
+                        sb.append("storageManager: ").append(m.invoke(null)).append("\n");
+                    } catch (Exception e2) {
+                        sb.append("storageManager: reflection failed\n");
+                    }
+                } else {
+                    sb.append("API < 30, no storageManager needed\n");
+                }
+            } catch (Exception e) {
+                sb.append("error: ").append(e.getMessage()).append("\n");
+            }
+            return sb.toString();
         }
 
         @JavascriptInterface
