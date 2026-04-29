@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
     private WebView webView;
     private Process serverProcess;
     private String currentModelName = "";
+    private String lastServerLog = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -396,6 +397,9 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String getLastError() { return lastServerLog; }
+
+        @JavascriptInterface
         public String getModelName() { return currentModelName; }
 
         @JavascriptInterface
@@ -420,20 +424,30 @@ public class MainActivity extends Activity {
         serverProcess = pb.start();
 
         final Process p = serverProcess;
+        final StringBuilder logBuf = new StringBuilder();
         new Thread(new Runnable() {
             public void run() {
                 try {
                     BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
                     String line;
-                    while ((line = br.readLine()) != null)
+                    while ((line = br.readLine()) != null) {
                         android.util.Log.d("LlamaServer", line);
+                        synchronized (logBuf) {
+                            logBuf.append(line).append("\n");
+                            if (logBuf.length() > 4000) logBuf.delete(0, logBuf.length() - 4000);
+                        }
+                    }
                 } catch (IOException ignored) {}
             }
         }).start();
 
         long deadline = System.currentTimeMillis() + 120000;
         while (System.currentTimeMillis() < deadline) {
-            if (!isAlive(serverProcess)) throw new Exception("Server process exited");
+            if (!isAlive(serverProcess)) {
+                Thread.sleep(300);
+                synchronized (logBuf) { lastServerLog = logBuf.toString().trim(); }
+                throw new Exception("Server exited.\n" + lastServerLog);
+            }
             try {
                 HttpURLConnection c = (HttpURLConnection)
                     new URL("http://127.0.0.1:" + SERVER_PORT + "/health").openConnection();
@@ -445,7 +459,8 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
             Thread.sleep(500);
         }
-        throw new Exception("Server did not start within 2 minutes");
+        synchronized (logBuf) { lastServerLog = logBuf.toString().trim(); }
+        throw new Exception("Server did not start within 2 minutes.\n" + lastServerLog);
     }
 
     private void killServer() {

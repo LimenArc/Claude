@@ -494,9 +494,13 @@ function esc(s) {
 
 // ── Model loading callbacks (called by Java via evaluateJavascript) ──────────
 function onModelLoading(name) {
-  showScreen('screen-loading');
+  var s = document.getElementById('screen-loading');
+  var back = s.querySelector('.load-back');
+  if (back) back.remove();
+  document.getElementById('loading-title').style.color = '';
   document.getElementById('loading-title').textContent = 'Loading Model…';
   document.getElementById('loading-msg').textContent = 'Loading ' + name + '\nThis may take 30–60 seconds.';
+  showScreen('screen-loading');
 }
 
 function onModelReady(name) {
@@ -507,11 +511,19 @@ function onModelReady(name) {
 }
 
 function onModelError(msg) {
-  var list = document.getElementById('model-list');
-  showScreen('screen-picker');
-  list.innerHTML = '<div style="color:var(--red);font-size:13px;padding:8px;line-height:1.6">' +
-    '<strong>Failed to load model</strong><br>' + esc(msg) + '</div>';
-  showErr('Load failed — see details in list');
+  var log = AB ? AB.getLastError() : '';
+  var full = msg + (log ? '\n\n' + log : '');
+  document.getElementById('loading-title').style.color = 'var(--red)';
+  document.getElementById('loading-title').textContent = 'Failed to Load';
+  document.getElementById('loading-msg').textContent = full;
+  var s = document.getElementById('screen-loading');
+  if (!s.querySelector('.load-back')) {
+    var btn = document.createElement('button');
+    btn.className = 'screen-btn sec load-back';
+    btn.textContent = '← Back to model list';
+    btn.onclick = onShowModelPicker;
+    s.appendChild(btn);
+  }
 }
 
 function onShowModelPicker() {
