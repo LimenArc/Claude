@@ -480,7 +480,12 @@ function onAppResume() {
 }
 
 function selectModel(path) {
-  if (AB) AB.loadModel(path);
+  if (!AB) return;
+  if (!AB.pathExists(path)) {
+    showErr('Cannot access: ' + path);
+    return;
+  }
+  AB.loadModel(path);
 }
 
 function esc(s) {
@@ -502,8 +507,11 @@ function onModelReady(name) {
 }
 
 function onModelError(msg) {
+  var list = document.getElementById('model-list');
   showScreen('screen-picker');
-  showErr('Failed to load: ' + msg);
+  list.innerHTML = '<div style="color:var(--red);font-size:13px;padding:8px;line-height:1.6">' +
+    '<strong>Failed to load model</strong><br>' + esc(msg) + '</div>';
+  showErr('Load failed — see details in list');
 }
 
 function onShowModelPicker() {
