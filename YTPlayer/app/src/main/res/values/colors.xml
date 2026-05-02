@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="red">#FF0000</color>
+    <color name="red_dark">#CC0000</color>
+    <color name="bg">#FFFFFF</color>
+    <color name="on_bg">#111111</color>
+    <color name="on_bg_secondary">#666666</color>
+    <color name="colorPrimary">#FF0000</color>
+    <color name="colorPrimaryVariant">#CC0000</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorSecondary">#282828</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+</resources>

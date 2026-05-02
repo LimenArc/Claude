@@ -1,0 +1,4 @@
+-keep class org.schabi.newpipe.extractor.** { *; }
+-keep class com.grack.nanojson.** { *; }
+-dontwarn org.mozilla.javascript.**
+-dontwarn org.mozilla.classfile.**

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">YTPlayer</string>
+    <string name="subtitle">Ad-free YouTube playback</string>
+    <string name="url_hint">YouTube URL or video ID</string>
+    <string name="play">Play</string>
+</resources>
