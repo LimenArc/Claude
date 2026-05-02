@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WebView webView;
     private Process serverProcess;
+    private java.io.FileDescriptor serverMemFd = null;
     private String currentModelName = "";
     private String lastServerLog = "";
 
@@ -158,6 +159,33 @@ public class MainActivity extends Activity {
         } finally { in.close(); out.close(); }
     }
     private File serverBinary() { return new File(binDir(), "llama-server"); }
+
+    // memfd_create: load binary into anonymous memory (bypasses noexec on all writable paths)
+    private String prepareExec(File binary) {
+        try {
+            Class<?> os = Class.forName("android.system.Os");
+            java.lang.reflect.Method create = os.getMethod("memfdCreate", String.class, int.class);
+            java.io.FileDescriptor fd = (java.io.FileDescriptor) create.invoke(null, "llama", 0);
+            serverMemFd = fd;
+            java.lang.reflect.Field fdField = java.io.FileDescriptor.class.getDeclaredField("descriptor");
+            fdField.setAccessible(true);
+            int fdNum = (Integer) fdField.get(fd);
+            java.lang.reflect.Method write = os.getMethod("write", java.io.FileDescriptor.class, byte[].class, int.class, int.class);
+            FileInputStream in = new FileInputStream(binary);
+            try {
+                byte[] buf = new byte[65536]; int n;
+                while ((n = in.read(buf)) != -1) {
+                    int off = 0;
+                    while (off < n) off += (Integer) write.invoke(null, fd, buf, off, n - off);
+                }
+            } finally { in.close(); }
+            return "/proc/self/fd/" + fdNum;
+        } catch (Exception e) {
+            serverMemFd = null;
+            android.util.Log.w("LlamaServer", "memfd unavailable, using direct path: " + e);
+            return binary.getAbsolutePath();
+        }
+    }
 
     private void js(final String code) {
         ui.post(new Runnable() {
@@ -443,8 +471,9 @@ public class MainActivity extends Activity {
 
     private void startServer(File model) throws Exception {
         File bd = binDir();
+        String execPath = prepareExec(serverBinary());
         List<String> cmd = new ArrayList<String>();
-        cmd.add(serverBinary().getAbsolutePath());
+        cmd.add(execPath);
         cmd.add("-m"); cmd.add(model.getAbsolutePath());
         cmd.add("-c"); cmd.add("4096");
         cmd.add("--host"); cmd.add("127.0.0.1");
@@ -498,6 +527,7 @@ public class MainActivity extends Activity {
 
     private void killServer() {
         if (serverProcess != null) { serverProcess.destroy(); serverProcess = null; }
+        serverMemFd = null;
     }
 
     private boolean isAlive(Process p) {
