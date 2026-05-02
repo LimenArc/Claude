@@ -124,10 +124,38 @@ public class MainActivity extends Activity {
     }
 
     private File binDir() {
-        // /data/user/0/ is mounted noexec on Android 10+ — use external files dir instead
+        // /data/user/0/ is mounted noexec on Android 10+ — use external files dir
         File ext = getExternalFilesDir("llama");
-        if (ext != null) { ext.mkdirs(); return ext; }
+        if (ext != null) {
+            ext.mkdirs();
+            migrateFromInternal(ext);
+            return ext;
+        }
         return new File(getFilesDir(), "llama");
+    }
+
+    private void migrateFromInternal(File dest) {
+        File oldDir = new File(getFilesDir(), "llama");
+        if (!oldDir.isDirectory()) return;
+        File[] files = oldDir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            File target = new File(dest, f.getName());
+            if (!target.exists()) {
+                try { copyFile(f, target); } catch (IOException ignored) {}
+            }
+            f.delete();
+        }
+        oldDir.delete();
+    }
+
+    private void copyFile(File src, File dst) throws IOException {
+        FileInputStream in = new FileInputStream(src);
+        FileOutputStream out = new FileOutputStream(dst);
+        try {
+            byte[] buf = new byte[65536]; int n;
+            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+        } finally { in.close(); out.close(); }
     }
     private File serverBinary() { return new File(binDir(), "llama-server"); }
 
