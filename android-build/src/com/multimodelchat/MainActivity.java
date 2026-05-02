@@ -251,6 +251,24 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void shareApp() {
+            ui.post(new Runnable() {
+                public void run() {
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("text/plain");
+                    intent.putExtra(Intent.EXTRA_SUBJECT, "Multi-Model Chat");
+                    intent.putExtra(Intent.EXTRA_TEXT,
+                        "Multi-Model Chat — run AI models offline on Android!\n\n" +
+                        "• Load any .gguf model for free local AI (no internet needed)\n" +
+                        "• Or connect to Claude API for cloud AI\n" +
+                        "• Supports thinking models, conversation history & themes\n\n" +
+                        "https://github.com/LimenArc/Claude");
+                    startActivity(Intent.createChooser(intent, "Share"));
+                }
+            });
+        }
+
+        @JavascriptInterface
         public boolean pathExists(String path) {
             return new File(path).exists();
         }
