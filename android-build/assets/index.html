@@ -22,7 +22,7 @@ body{
   display:flex;flex-direction:column;
 }
 
-/* ── Views — each fills full body height ────────────────────────────────── */
+/* ── Views ──────────────────────────────────────────────────────────────── */
 .view{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .view.active{display:flex}
 
@@ -37,12 +37,14 @@ body{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .hdr-sub{font-size:12px;color:var(--accent2);flex:1;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* Buttons: solid border so they're always visible on any background */
 .hbtn{
-  min-width:36px;width:36px;height:36px;border-radius:10px;border:none;
+  min-width:36px;width:36px;height:36px;border-radius:10px;
+  border:1px solid var(--border);
   background:var(--surface2);color:var(--text);cursor:pointer;
-  font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.hbtn:active{opacity:.7}
+.hbtn:active{opacity:.6;background:var(--border)}
 .chg-btn{
   padding:4px 10px;border-radius:8px;border:1px solid var(--accent);
   background:transparent;color:var(--accent2);cursor:pointer;
@@ -80,6 +82,20 @@ body{
   width:100%;text-align:center;display:block;margin-bottom:8px;
 }
 .sec-btn:active{background:var(--surface2)}
+/* Recent conversations in picker */
+.pick-section-label{
+  font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.6px;font-weight:600;margin:16px 0 8px;
+}
+.pick-hist-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;cursor:pointer;text-align:left;
+  width:100%;margin-bottom:6px;display:block;
+}
+.pick-hist-item:active{border-color:var(--accent);background:var(--surface2)}
+.pick-hist-title{font-size:13px;color:var(--text);display:block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-hist-meta{font-size:11px;color:var(--muted);display:block;margin-top:2px}
 
 /* ── Loading view ───────────────────────────────────────────────────────── */
 #v-loading{align-items:center;justify-content:center;gap:16px;padding:32px 24px;text-align:center}
@@ -99,18 +115,36 @@ body{
 }
 #messages::-webkit-scrollbar{width:4px}
 #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:92%}
 .msg.user{align-self:flex-end;align-items:flex-end}
-.msg.assistant{align-self:flex-start;align-items:flex-start}
+.msg.assistant{align-self:flex-start;align-items:flex-start;max-width:96%}
 .msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 4px}
 .msg-bubble{
   padding:9px 13px;border-radius:12px;line-height:1.55;
   white-space:pre-wrap;word-break:break-word;font-size:14px;
 }
 .msg.user .msg-bubble{background:var(--user-bg);color:#c7d2fe;border-bottom-right-radius:4px}
-.msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px}
+.msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px;width:100%}
 .msg-bubble.streaming::after{content:'▌';animation:blink .7s steps(1) infinite;color:var(--accent2)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* Thinking blocks */
+.think-wrap{width:100%;margin-bottom:6px}
+details.think-block{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;font-size:13px;
+}
+details.think-block summary{
+  cursor:pointer;color:var(--muted);user-select:none;
+  list-style:none;display:flex;align-items:center;gap:6px;
+}
+details.think-block summary::before{content:'▶';font-size:9px;transition:transform .2s}
+details.think-block[open] summary::before{transform:rotate(90deg)}
+.think-content{
+  margin-top:8px;padding-top:8px;border-top:1px solid var(--border);
+  white-space:pre-wrap;word-break:break-word;color:var(--muted);font-size:12px;line-height:1.5;
+}
+.think-response{white-space:pre-wrap;word-break:break-word}
+/* Empty state */
 #empty-state{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   flex:1;gap:10px;color:var(--muted);padding:20px;text-align:center;
@@ -118,7 +152,7 @@ body{
 #empty-state .es-icon{font-size:36px;opacity:.35}
 #empty-state p{font-size:13px;max-width:280px}
 
-/* ── API Key panel (inside chat view) ───────────────────────────────────── */
+/* ── API Key panel ──────────────────────────────────────────────────────── */
 #apikey-panel{
   flex:1;min-height:0;display:none;flex-direction:column;gap:14px;
   padding:28px 20px;align-items:center;justify-content:center;overflow-y:auto;
@@ -136,17 +170,20 @@ body{
   background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600;
 }
 
-/* ── Token bar ──────────────────────────────────────────────────────────── */
+/* ── Token bar (local + cloud) ──────────────────────────────────────────── */
 #token-bar{
-  padding:4px 14px;background:var(--surface);border-top:1px solid var(--border);
-  font-size:11px;color:var(--muted);display:none;gap:10px;flex-wrap:wrap;flex-shrink:0;
+  padding:5px 14px;background:var(--surface);border-top:1px solid var(--border);
+  font-size:11px;color:var(--muted);display:none;gap:12px;flex-wrap:wrap;
+  align-items:center;flex-shrink:0;
 }
+.tok-lbl{color:var(--muted)}
 .tok-val{color:var(--accent2);font-weight:600}
 .tok-cache{color:var(--green);font-weight:600}
+.tok-speed{color:var(--muted);font-style:italic}
 
 /* ── Input row ──────────────────────────────────────────────────────────── */
 #input-row{
-  background:var(--surface);border-top:1px solid var(--border);
+  background:var(--surface);border-top:2px solid var(--border);
   padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));
   display:flex;gap:8px;align-items:flex-end;flex-shrink:0;
 }
@@ -164,6 +201,33 @@ body{
   font-weight:600;white-space:nowrap;flex-shrink:0;
 }
 #send-btn:disabled{opacity:.5}
+
+/* ── History sheet ──────────────────────────────────────────────────────── */
+#hist-overlay{
+  display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);
+}
+#hist-overlay.show{display:block}
+#hist-sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:601;
+  background:var(--surface);border-radius:18px 18px 0 0;
+  border-top:1px solid var(--border);
+  max-height:80vh;max-height:80dvh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .3s ease;
+}
+#hist-overlay.show #hist-sheet{transform:translateY(0)}
+.hist-hdr{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.hist-hdr-title{font-size:16px;font-weight:700;color:var(--text);flex:1}
+.hist-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px}
+#hist-body{flex:1;min-height:0;overflow-y:auto;padding:8px 0}
+.hi{padding:11px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.hi:last-child{border-bottom:none}
+.hi:active{background:var(--surface2)}
+.hi-body{flex:1;min-width:0}
+.hi-title{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+.hi-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:6px;border-radius:6px;flex-shrink:0}
+.hi-del:active{color:var(--red)}
+#hist-empty{color:var(--muted);font-size:13px;padding:20px 18px;text-align:center}
 
 /* ── Settings sheet ─────────────────────────────────────────────────────── */
 #settings-overlay{
@@ -197,14 +261,6 @@ body{
 .sh-btn{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
 #sysprompt{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;resize:none;min-height:60px;max-height:120px;font-family:inherit;line-height:1.4;outline:none}
 #sysprompt:focus{border-color:var(--accent)}
-.hi{padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;background:none;width:100%;text-align:left;border-left:none;border-right:none;border-top:none}
-.hi:last-child{border-bottom:none}
-.hi-body{flex:1;min-width:0}
-.hi-title{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-.hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
-.hi-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:6px;border-radius:6px;flex-shrink:0}
-.hi-del:active{color:var(--red)}
-#hist-empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center}
 
 /* ── Dialog ─────────────────────────────────────────────────────────────── */
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:700;align-items:center;justify-content:center;padding:20px}
@@ -246,6 +302,7 @@ body{
   <div class="hdr">
     <div class="hdr-row">
       <span class="hdr-title">Multi-Model Chat</span>
+      <button class="hbtn" onclick="openHistory()" title="History">📋</button>
       <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
     <div class="hdr-row">
@@ -263,6 +320,10 @@ body{
     <div id="model-list"></div>
     <button class="sec-btn" onclick="rescanFolder()">↻ Refresh</button>
     <button class="sec-btn" onclick="searchEntirePhone()">🔍 Search entire phone</button>
+    <div id="picker-hist-section" style="display:none">
+      <div class="pick-section-label">Recent Conversations</div>
+      <div id="picker-hist-list"></div>
+    </div>
   </div>
 </div>
 
@@ -280,6 +341,7 @@ body{
     <div class="hdr-row">
       <span class="hdr-title">Multi-Model Chat</span>
       <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="hbtn" onclick="openHistory()" title="History">📋</button>
         <button class="hbtn" onclick="newChat()" title="New chat">✏️</button>
         <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
       </div>
@@ -307,16 +369,29 @@ body{
     </div>
   </div>
 
+  <!-- Token bar -->
   <div id="token-bar">
-    <span>In: <span class="tok-val" id="tok-in">0</span></span>
-    <span>Out: <span class="tok-val" id="tok-out">0</span></span>
-    <span id="cache-item" style="display:none">Cache: <span class="tok-cache" id="tok-cache">0</span></span>
+    <span><span class="tok-lbl">In:</span> <span class="tok-val" id="tok-in">0</span></span>
+    <span><span class="tok-lbl">Out:</span> <span class="tok-val" id="tok-out">0</span></span>
+    <span id="cache-item" style="display:none"><span class="tok-lbl">Cache:</span> <span class="tok-cache" id="tok-cache">0</span></span>
+    <span id="speed-item" style="display:none"><span class="tok-speed" id="tok-speed"></span></span>
   </div>
 
   <div id="input-row">
     <textarea id="user-input" rows="1" placeholder="Type a message…"
       oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
     <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- ── History sheet ─────────────────────────────────────────────────────── -->
+<div id="hist-overlay" onclick="histOverlayClick(event)">
+  <div id="hist-sheet">
+    <div class="hist-hdr">
+      <span class="hist-hdr-title">📋 Conversations</span>
+      <button class="hist-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div id="hist-body"></div>
   </div>
 </div>
 
@@ -378,11 +453,6 @@ body{
       <textarea id="sysprompt" rows="3" placeholder="Give the AI a persona or instructions…"
         oninput="autoResize(this)"></textarea>
     </div>
-
-    <div class="sheet-section">
-      <div class="sheet-label">Conversation History</div>
-      <div id="hist-list"></div>
-    </div>
   </div>
 </div>
 
@@ -422,6 +492,7 @@ var messages = [];
 var streaming = false;
 var abortCtrl = null;
 var tokIn = 0, tokOut = 0, tokCache = 0;
+var _streamStart = 0;
 var _modelName = '';
 var _convId = null;
 var _pendingModelPath = null;
@@ -473,6 +544,7 @@ window.addEventListener('DOMContentLoaded', function() {
     showView('v-picker');
     loadFolderInput();
     rescanFolder();
+    renderPickerHistory();
   } else if (status.indexOf('ready:') === 0) {
     showView('v-chat');
     setLocalModelName(status.slice(6));
@@ -489,9 +561,67 @@ function showView(id) {
   });
 }
 
+// ── History sheet ─────────────────────────────────────────────────────────────
+function openHistory() {
+  renderHistorySheet();
+  document.getElementById('hist-overlay').classList.add('show');
+}
+function closeHistory() {
+  document.getElementById('hist-overlay').classList.remove('show');
+}
+function histOverlayClick(e) {
+  if (e.target.id === 'hist-overlay') closeHistory();
+}
+function renderHistorySheet() {
+  var body = document.getElementById('hist-body');
+  var history = getHistory();
+  if (!history.length) {
+    body.innerHTML = '<div id="hist-empty">No saved conversations yet.</div>';
+    return;
+  }
+  body.innerHTML = '';
+  history.forEach(function(h) {
+    var d = new Date(h.updated || h.created);
+    var ds = d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' +
+             d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    var row = document.createElement('div');
+    row.className = 'hi';
+    var bd = document.createElement('div');
+    bd.className = 'hi-body';
+    bd.innerHTML = '<span class="hi-title">' + esc(h.title) + '</span>' +
+      '<span class="hi-meta">' + esc(ds) + (h.model ? ' · ' + esc(h.model) : '') + '</span>';
+    bd.onclick = function(){ closeHistory(); loadHistoryItem(h); };
+    var del = document.createElement('button');
+    del.className = 'hi-del';
+    del.textContent = '🗑';
+    del.onclick = function(e){ e.stopPropagation(); deleteHistoryItem(h.id); renderHistorySheet(); };
+    row.appendChild(bd); row.appendChild(del);
+    body.appendChild(row);
+  });
+}
+
+// Compact history in picker start screen
+function renderPickerHistory() {
+  var history = getHistory();
+  var sec = document.getElementById('picker-hist-section');
+  var list = document.getElementById('picker-hist-list');
+  if (!history.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  list.innerHTML = '';
+  history.slice(0, 5).forEach(function(h) {
+    var d = new Date(h.updated || h.created);
+    var ds = d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    var btn = document.createElement('button');
+    btn.className = 'pick-hist-item';
+    btn.innerHTML = '<span class="pick-hist-title">' + esc(h.title) + '</span>' +
+      '<span class="pick-hist-meta">' + esc(ds) + (h.model ? ' · ' + esc(h.model) : '') + '</span>';
+    btn.onclick = function(){ loadHistoryItem(h); };
+    list.appendChild(btn);
+  });
+}
+
 // ── Settings ─────────────────────────────────────────────────────────────────
 function openSettings() {
-  renderHistoryList();
   document.getElementById('settings-overlay').classList.add('show');
 }
 function closeSettings() {
@@ -507,7 +637,6 @@ function setMode(m) {
   document.getElementById('mtog-local').classList.toggle('active', m === 'local');
   document.getElementById('mtog-cloud').classList.toggle('active', m === 'cloud');
   document.getElementById('cloud-config-section').style.display = m === 'cloud' ? 'flex' : 'none';
-  document.getElementById('token-bar').style.display = m === 'cloud' ? 'flex' : 'none';
   if (m === 'local') {
     showChatContent();
   } else {
@@ -697,6 +826,7 @@ function onShowModelPicker() {
   showView('v-picker');
   loadFolderInput();
   rescanFolder();
+  renderPickerHistory();
 }
 
 // ── History ──────────────────────────────────────────────────────────────────
@@ -708,7 +838,9 @@ function saveHistory() {
   if (!messages.length) return;
   var history = getHistory();
   var now = Date.now();
-  var title = messages[0].content.slice(0, 60) + (messages[0].content.length > 60 ? '…' : '');
+  // Save raw text (strip think tags for title)
+  var firstMsg = messages[0].content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  var title = firstMsg.slice(0, 60) + (firstMsg.length > 60 ? '…' : '');
   if (_convId) {
     var found = false;
     for (var i = 0; i < history.length; i++) {
@@ -725,36 +857,7 @@ function saveHistory() {
   if (history.length > 30) history = history.slice(0, 30);
   localStorage.setItem('chat_history', JSON.stringify(history));
 }
-function renderHistoryList() {
-  var list = document.getElementById('hist-list');
-  var history = getHistory();
-  if (!history.length) {
-    list.innerHTML = '<div id="hist-empty">No saved conversations yet.</div>';
-    return;
-  }
-  list.innerHTML = '';
-  history.forEach(function(h) {
-    var d = new Date(h.updated || h.created);
-    var ds = d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' +
-             d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
-    var row = document.createElement('div');
-    row.className = 'hi';
-    var body = document.createElement('div');
-    body.className = 'hi-body';
-    body.innerHTML = '<span class="hi-title">' + esc(h.title) + '</span>' +
-      '<span class="hi-meta">' + esc(ds) + (h.model ? ' · ' + esc(h.model) : '') + '</span>';
-    body.onclick = function(){ loadHistoryItem(h); };
-    var del = document.createElement('button');
-    del.className = 'hi-del';
-    del.textContent = '✕';
-    del.onclick = function(e){ e.stopPropagation(); deleteHistoryItem(h.id); };
-    row.appendChild(body);
-    row.appendChild(del);
-    list.appendChild(row);
-  });
-}
 function loadHistoryItem(h) {
-  closeSettings();
   messages = h.messages ? h.messages.slice() : [];
   _convId = h.id;
   var el = document.getElementById('messages');
@@ -763,15 +866,12 @@ function loadHistoryItem(h) {
     el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div><p>Start a conversation.</p></div>';
   } else {
     messages.forEach(function(m) {
-      var wrap = document.createElement('div');
-      wrap.className = 'msg ' + m.role;
-      wrap.innerHTML = '<span class="msg-role">' + (m.role==='user'?'You':'Assistant') + '</span><div class="msg-bubble"></div>';
-      wrap.querySelector('.msg-bubble').textContent = m.content;
-      el.appendChild(wrap);
+      renderMsg(m.role, m.content, el);
     });
     scrollBottom();
   }
   if (h.model) setLocalModelName(h.model);
+  resetTokenBar();
   showView('v-chat');
   setMode('local');
 }
@@ -779,7 +879,59 @@ function deleteHistoryItem(id) {
   var history = getHistory().filter(function(h){ return h.id !== id; });
   localStorage.setItem('chat_history', JSON.stringify(history));
   if (_convId === id) _convId = null;
-  renderHistoryList();
+}
+
+// ── Render message (with thinking block support) ─────────────────────────────
+function renderMsg(role, rawContent, container) {
+  var wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  var label = document.createElement('span');
+  label.className = 'msg-role';
+  label.textContent = role === 'user' ? 'You' : 'Assistant';
+  wrap.appendChild(label);
+
+  if (role === 'assistant') {
+    // Check for <think>...</think> blocks
+    var thinkRe = /<think>([\s\S]*?)<\/think>/gi;
+    var cleaned = rawContent.replace(thinkRe, '').trim();
+    var thinkMatches = [];
+    var m;
+    var re2 = /<think>([\s\S]*?)<\/think>/gi;
+    while ((m = re2.exec(rawContent)) !== null) thinkMatches.push(m[1].trim());
+
+    if (thinkMatches.length > 0) {
+      var tw = document.createElement('div');
+      tw.className = 'think-wrap';
+      thinkMatches.forEach(function(th) {
+        var det = document.createElement('details');
+        det.className = 'think-block';
+        var sum = document.createElement('summary');
+        sum.textContent = '💭 Thinking';
+        var tc = document.createElement('div');
+        tc.className = 'think-content';
+        tc.textContent = th;
+        det.appendChild(sum); det.appendChild(tc);
+        tw.appendChild(det);
+      });
+      var resp = document.createElement('div');
+      resp.className = 'msg-bubble think-response';
+      resp.textContent = cleaned || rawContent;
+      wrap.appendChild(tw);
+      wrap.appendChild(resp);
+    } else {
+      var bub = document.createElement('div');
+      bub.className = 'msg-bubble';
+      bub.textContent = rawContent;
+      wrap.appendChild(bub);
+    }
+  } else {
+    var bub2 = document.createElement('div');
+    bub2.className = 'msg-bubble';
+    bub2.textContent = rawContent;
+    wrap.appendChild(bub2);
+  }
+  container.appendChild(wrap);
+  return wrap;
 }
 
 // ── Chat ─────────────────────────────────────────────────────────────────────
@@ -797,13 +949,67 @@ function addMessage(role, content) {
   var es = document.getElementById('empty-state');
   if (es) es.remove();
   var container = document.getElementById('messages');
+  var wrap = renderMsg(role, content, container);
+  scrollBottom();
+  // Return the bubble element for streaming updates
+  var bub = wrap.querySelector('.msg-bubble, .think-response');
+  return bub;
+}
+
+function addStreamBubble() {
+  var es = document.getElementById('empty-state');
+  if (es) es.remove();
+  var container = document.getElementById('messages');
   var wrap = document.createElement('div');
-  wrap.className = 'msg ' + role;
-  wrap.innerHTML = '<span class="msg-role">' + (role==='user'?'You':'Assistant') + '</span><div class="msg-bubble"></div>';
-  wrap.querySelector('.msg-bubble').textContent = content;
+  wrap.className = 'msg assistant';
+  var label = document.createElement('span');
+  label.className = 'msg-role';
+  label.textContent = 'Assistant';
+  var bub = document.createElement('div');
+  bub.className = 'msg-bubble streaming';
+  wrap.appendChild(label);
+  wrap.appendChild(bub);
   container.appendChild(wrap);
   scrollBottom();
-  return wrap.querySelector('.msg-bubble');
+  return {wrap: wrap, bub: bub};
+}
+
+function finalizeStreamBubble(wrap, rawText) {
+  // Replace the simple bubble with thinking-aware rendering
+  var label = wrap.querySelector('.msg-role');
+  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+  wrap.appendChild(label);
+  var thinkRe = /<think>([\s\S]*?)<\/think>/gi;
+  var cleaned = rawText.replace(thinkRe, '').trim();
+  var thinkMatches = [];
+  var m, re2 = /<think>([\s\S]*?)<\/think>/gi;
+  while ((m = re2.exec(rawText)) !== null) thinkMatches.push(m[1].trim());
+  if (thinkMatches.length > 0) {
+    var tw = document.createElement('div');
+    tw.className = 'think-wrap';
+    thinkMatches.forEach(function(th) {
+      var det = document.createElement('details');
+      det.className = 'think-block';
+      det.open = false;
+      var sum = document.createElement('summary');
+      sum.textContent = '💭 Thinking (' + Math.round(th.split(/\s+/).length / 5) + 's read)';
+      var tc = document.createElement('div');
+      tc.className = 'think-content';
+      tc.textContent = th;
+      det.appendChild(sum); det.appendChild(tc);
+      tw.appendChild(det);
+    });
+    var resp = document.createElement('div');
+    resp.className = 'msg-bubble think-response';
+    resp.textContent = cleaned || rawText;
+    wrap.appendChild(tw);
+    wrap.appendChild(resp);
+  } else {
+    var bub = document.createElement('div');
+    bub.className = 'msg-bubble';
+    bub.textContent = rawText;
+    wrap.appendChild(bub);
+  }
 }
 
 function scrollBottom() {
@@ -822,33 +1028,44 @@ async function sendMessage() {
   var btn = document.getElementById('send-btn');
   btn.disabled = false; btn.textContent = 'Stop';
   streaming = true;
-  var bubble = addMessage('assistant', '');
-  bubble.classList.add('streaming');
+  _streamStart = Date.now();
+  var stream = addStreamBubble();
+  var rawText = '';
   try {
-    if (mode === 'local') await streamLocal(bubble);
-    else await streamCloud(bubble);
+    if (mode === 'local') rawText = await streamLocal(stream.bub);
+    else rawText = await streamCloud(stream.bub);
   } catch(e) {
-    if (e.name !== 'AbortError') { bubble.textContent += '\n[Error: ' + e.message + ']'; showErr(e.message); }
+    if (e.name !== 'AbortError') {
+      stream.bub.textContent += '\n[Error: ' + e.message + ']';
+      stream.bub.classList.remove('streaming');
+      showErr(e.message);
+    }
   }
-  bubble.classList.remove('streaming');
-  messages.push({role:'assistant', content:bubble.textContent});
+  stream.bub.classList.remove('streaming');
+  var finalText = rawText || stream.bub.textContent;
+  finalizeStreamBubble(stream.wrap, finalText);
+  messages.push({role:'assistant', content:finalText});
   streaming = false; abortCtrl = null;
   btn.textContent = 'Send'; btn.disabled = false;
   saveHistory();
 }
 
 // ── Local streaming ──────────────────────────────────────────────────────────
-async function streamLocal(bubble) {
+async function streamLocal(bub) {
   abortCtrl = new AbortController();
   var sys = document.getElementById('sysprompt').value.trim();
   var msgs = sys ? [{role:'system',content:sys}].concat(messages) : messages.slice();
   var resp = await fetch('http://127.0.0.1:' + localPort + '/v1/chat/completions', {
     method:'POST', signal:abortCtrl.signal,
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({messages:msgs, stream:true, temperature:0.7})
+    body:JSON.stringify({
+      messages:msgs, stream:true, temperature:0.7,
+      stream_options:{include_usage:true}
+    })
   });
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   var reader = resp.body.getReader(), dec = new TextDecoder(), buf = '', text = '';
+  var inThink = false, thinkBuf = '', respBuf = '';
   while (true) {
     var chunk = await reader.read();
     if (chunk.done) break;
@@ -861,15 +1078,33 @@ async function streamLocal(bubble) {
       if (raw === '[DONE]') continue;
       try {
         var ev = JSON.parse(raw);
+        // Token usage (final chunk)
+        if (ev.usage) {
+          tokIn = ev.usage.prompt_tokens || 0;
+          tokOut = ev.usage.completion_tokens || 0;
+          var elapsed = (Date.now() - _streamStart) / 1000;
+          if (elapsed > 0 && tokOut > 0) {
+            var tps = (tokOut / elapsed).toFixed(1);
+            document.getElementById('tok-speed').textContent = tps + ' tok/s';
+            document.getElementById('speed-item').style.display = 'inline';
+          }
+          refreshTokenBar();
+        }
         var delta = ev.choices && ev.choices[0] && ev.choices[0].delta;
-        if (delta && delta.content) { text += delta.content; bubble.textContent = text; scrollBottom(); }
+        if (delta && delta.content) {
+          text += delta.content;
+          // Live streaming: show raw text while streaming
+          bub.textContent = text;
+          scrollBottom();
+        }
       } catch(e2) {}
     }
   }
+  return text;
 }
 
 // ── Cloud streaming ──────────────────────────────────────────────────────────
-async function streamCloud(bubble) {
+async function streamCloud(bub) {
   var key = localStorage.getItem('anthropic_key') || '';
   if (!key) { showApikeyScreen(); throw new Error('No API key'); }
   abortCtrl = new AbortController();
@@ -897,8 +1132,15 @@ async function streamCloud(bubble) {
       if (!line.startsWith('data:')) continue;
       try {
         var ev = JSON.parse(line.slice(5).trim());
-        if (evType === 'content_block_delta' && ev.delta && ev.delta.text) {
-          text += ev.delta.text; bubble.textContent = text; scrollBottom();
+        if (evType === 'content_block_delta' && ev.delta) {
+          var chunk2 = ev.delta.text || ev.delta.thinking || '';
+          if (ev.delta.type === 'thinking_delta') {
+            // Claude extended thinking — wrap in think tags
+            text += '<think>' + chunk2 + '</think>';
+          } else if (chunk2) {
+            text += chunk2;
+          }
+          bub.textContent = text; scrollBottom();
         }
         if (evType === 'message_start' && ev.message && ev.message.usage) {
           var u = ev.message.usage;
@@ -910,6 +1152,7 @@ async function streamCloud(bubble) {
       } catch(e2) {}
     }
   }
+  return text;
 }
 
 // ── Cloud model selector ─────────────────────────────────────────────────────
@@ -953,16 +1196,19 @@ function resetTokenBar() {
   document.getElementById('tok-in').textContent = '0';
   document.getElementById('tok-out').textContent = '0';
   document.getElementById('tok-cache').textContent = '0';
+  document.getElementById('tok-speed').textContent = '';
   document.getElementById('cache-item').style.display = 'none';
+  document.getElementById('speed-item').style.display = 'none';
+  document.getElementById('token-bar').style.display = 'none';
 }
 function refreshTokenBar() {
   document.getElementById('tok-in').textContent  = fmt(tokIn);
   document.getElementById('tok-out').textContent = fmt(tokOut);
   if (tokCache > 0) {
     document.getElementById('tok-cache').textContent = fmt(tokCache);
-    document.getElementById('cache-item').style.display = 'flex';
+    document.getElementById('cache-item').style.display = 'inline';
   }
-  if (mode === 'cloud') document.getElementById('token-bar').style.display = 'flex';
+  document.getElementById('token-bar').style.display = 'flex';
 }
 function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
 
@@ -975,7 +1221,7 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function showErr(msg) {
   var t = document.getElementById('err-toast');
