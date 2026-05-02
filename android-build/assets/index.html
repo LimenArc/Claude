@@ -17,88 +17,47 @@
     font-size:15px;overflow:hidden}
   #app{display:flex;flex-direction:column;height:100%;height:100dvh}
 
-  /* Header */
-  #header{background:var(--surface);border-bottom:1px solid var(--border);
-    padding:10px 14px;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
-  #header-top{display:flex;align-items:center;gap:8px}
-  #app-title{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;flex:1}
-  #mode-btns{display:flex;gap:4px}
-  .mode-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:13px;transition:all .2s}
-  .mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-  #new-chat-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap}
-  #new-chat-btn:hover{border-color:var(--accent);color:var(--accent)}
+  /* ── Header ── */
+  #header{background:var(--surface);border-bottom:2px solid var(--accent);
+    padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+  #header-row1{display:flex;align-items:center;gap:10px}
+  #app-title{font-size:17px;font-weight:800;color:var(--text);flex:1}
+  #header-btns{display:flex;gap:6px;align-items:center}
+  .hbtn{min-width:36px;height:36px;border-radius:10px;border:none;
+    background:var(--surface2);color:var(--text);cursor:pointer;
+    font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hbtn:active{opacity:.7}
+  #header-row2{display:flex;align-items:center;gap:8px}
+  #model-name-label{font-size:12px;color:var(--accent2);flex:1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+  #change-model-btn{padding:4px 12px;border-radius:8px;
+    border:1px solid var(--accent);background:transparent;
+    color:var(--accent2);cursor:pointer;font-size:12px;white-space:nowrap;flex-shrink:0}
 
-  /* Local mode info row */
-  #local-info{display:flex;align-items:center;gap:8px}
-  #model-name-label{font-size:12px;color:var(--muted);flex:1;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  #change-model-btn{padding:3px 10px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--accent2);cursor:pointer;font-size:11px;white-space:nowrap}
-  #change-model-btn:hover{background:var(--surface2)}
-
-  /* Cloud model row */
-  #cloud-model-row{display:none;align-items:center;gap:6px}
-  #model-select{flex:1;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px}
-  #add-model-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
-  #add-model-btn:hover{background:var(--surface2)}
-  #apikey-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:11px;white-space:nowrap}
-  #apikey-btn:hover{background:var(--surface2)}
-
-  /* System prompt */
-  #sysprompt-row{display:flex;gap:6px}
-  #sysprompt{flex:1;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:6px;padding:6px 8px;
-    font-size:12px;resize:none;min-height:34px;max-height:72px;
-    font-family:inherit;line-height:1.4}
-  #sysprompt::placeholder{color:var(--muted)}
-
-  /* API Key screen */
-  #apikey-screen{display:none;flex-direction:column;gap:14px;
-    padding:28px 20px;align-items:center;justify-content:center;flex:1}
-  #apikey-screen .ak-icon{font-size:36px;opacity:.6}
-  #apikey-screen h2{font-size:18px;font-weight:600;color:var(--text);text-align:center}
-  #apikey-screen p{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
-  #apikey-input{width:100%;max-width:380px;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;
-    font-family:monospace}
-  #apikey-input::placeholder{color:var(--muted)}
-  #apikey-save-btn{padding:10px 28px;border-radius:8px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
-  #apikey-save-btn:hover{background:var(--accent2)}
-
-  /* Messages */
+  /* ── Messages ── */
   #messages{flex:1;min-height:0;overflow-y:auto;padding:12px 14px;
     display:flex;flex-direction:column;gap:10px}
   #messages::-webkit-scrollbar{width:4px}
-  #messages::-webkit-scrollbar-track{background:transparent}
   #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
   .msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
   .msg.user{align-self:flex-end;align-items:flex-end}
   .msg.assistant{align-self:flex-start;align-items:flex-start}
-  .msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.5px;padding:0 4px}
+  .msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 4px}
   .msg-bubble{padding:9px 13px;border-radius:12px;line-height:1.55;
     white-space:pre-wrap;word-break:break-word;font-size:14px}
   .msg.user .msg-bubble{background:var(--user-bg);color:#c7d2fe;border-bottom-right-radius:4px}
   .msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px}
-  .msg-bubble.streaming::after{content:'▌';
-    animation:blink .7s steps(1) infinite;color:var(--accent2)}
+  .msg-bubble.streaming::after{content:'▌';animation:blink .7s steps(1) infinite;color:var(--accent2)}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-  /* Token bar */
-  #token-bar{padding:5px 14px;background:var(--surface);
-    border-top:1px solid var(--border);font-size:11px;color:var(--muted);
-    display:none;gap:10px;flex-wrap:wrap;flex-shrink:0}
+  /* ── Token bar ── */
+  #token-bar{padding:4px 14px;background:var(--surface);border-top:1px solid var(--border);
+    font-size:11px;color:var(--muted);display:none;gap:10px;flex-wrap:wrap;flex-shrink:0}
   .tok-item{display:flex;gap:4px;align-items:center}
   .tok-val{color:var(--accent2);font-weight:600}
   .tok-cache{color:var(--green);font-weight:600}
 
-  /* Input */
+  /* ── Input ── */
   #input-row{background:var(--surface);border-top:1px solid var(--border);
     padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));
     display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
@@ -110,19 +69,120 @@
   #user-input::placeholder{color:var(--muted)}
   #send-btn{padding:9px 18px;border-radius:10px;border:none;
     background:var(--accent);color:#fff;cursor:pointer;font-size:14px;
-    font-weight:600;white-space:nowrap;flex-shrink:0;transition:background .15s}
-  #send-btn:hover:not(:disabled){background:var(--accent2)}
-  #send-btn:disabled{opacity:.5;cursor:not-allowed}
+    font-weight:600;white-space:nowrap;flex-shrink:0}
+  #send-btn:disabled{opacity:.5}
 
-  /* Empty state */
+  /* ── Empty state ── */
   #empty-state{display:flex;flex-direction:column;align-items:center;
     justify-content:center;flex:1;gap:10px;color:var(--muted);padding:20px;text-align:center}
   #empty-state .es-icon{font-size:36px;opacity:.35}
   #empty-state p{font-size:13px;max-width:280px}
 
-  /* Dialog */
+  /* ── API Key screen ── */
+  #apikey-screen{display:none;flex-direction:column;gap:14px;
+    padding:28px 20px;align-items:center;justify-content:center;flex:1}
+  #apikey-screen h2{font-size:18px;font-weight:600}
+  #apikey-screen p{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
+  #apikey-input{width:100%;max-width:380px;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:monospace}
+  #apikey-save-btn{padding:10px 28px;border-radius:8px;border:none;
+    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+
+  /* ── Full-screen overlay screens ── */
+  .screen{display:none;position:fixed;inset:0;z-index:400;background:var(--bg);
+    flex-direction:column;align-items:center;justify-content:flex-start;
+    padding:0;overflow-y:auto}
+  .screen.active{display:flex}
+
+  /* Picker screen */
+  #screen-picker{padding-top:0}
+  #picker-header{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);
+    padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+  #picker-title{font-size:17px;font-weight:800;color:var(--text);flex:1}
+  .picker-body{width:100%;padding:16px 14px;display:flex;flex-direction:column;gap:12px}
+  .folder-row{display:flex;gap:6px;align-items:center}
+  .folder-input{flex:1;background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;padding:9px 10px;color:var(--text);font-size:12px;
+    font-family:monospace;min-width:0;outline:none}
+  .folder-input:focus{border-color:var(--accent)}
+  .folder-btn{padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface2);color:var(--accent2);cursor:pointer;font-size:13px;
+    white-space:nowrap;flex-shrink:0}
+  .model-list{display:flex;flex-direction:column;gap:6px}
+  .model-item{background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:13px 16px;cursor:pointer;text-align:left;
+    font-size:14px;color:var(--text);width:100%}
+  .model-item:active{border-color:var(--accent);background:var(--surface2)}
+  .model-item small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+  .sec-btn{padding:11px 20px;border-radius:10px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:13px;width:100%;text-align:center}
+  .sec-btn:active{background:var(--surface2)}
+
+  /* Loading screen */
+  #screen-loading{align-items:center;justify-content:center;gap:18px;padding:32px 24px;text-align:center}
+  #screen-loading .screen-icon{font-size:40px;opacity:.7}
+  #screen-loading h2{font-size:20px;font-weight:700}
+  #screen-loading p{font-size:13px;color:var(--muted);max-width:300px;line-height:1.5;white-space:pre-wrap}
+  .screen-btn-back{padding:12px 28px;border-radius:10px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:14px;width:100%;max-width:300px}
+
+  /* ── Settings sheet ── */
+  #settings-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6)}
+  #settings-overlay.show{display:block}
+  #settings-sheet{position:fixed;left:0;right:0;bottom:0;z-index:601;
+    background:var(--surface);border-radius:18px 18px 0 0;
+    border-top:1px solid var(--border);
+    max-height:90dvh;overflow-y:auto;
+    transform:translateY(100%);transition:transform .3s ease}
+  #settings-overlay.show #settings-sheet{transform:translateY(0)}
+  .sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;
+    margin:12px auto 0}
+  .sheet-title{font-size:16px;font-weight:700;color:var(--text);padding:14px 18px 0}
+  .sheet-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+  .sheet-section:last-child{border-bottom:none;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+  .sheet-label{font-size:11px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.6px;margin-bottom:10px;font-weight:600}
+  /* Themes in sheet */
+  .theme-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .swatch{aspect-ratio:1;border-radius:50%;cursor:pointer;
+    border:3px solid transparent;transition:transform .15s,border-color .15s}
+  .swatch.active{border-color:var(--text)}
+  .swatch:active{transform:scale(.9)}
+  .swatch-label{font-size:9px;color:var(--muted);text-align:center;margin-top:3px}
+  /* Mode toggle */
+  .mode-toggle{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
+  .mtog{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;
+    color:var(--muted);cursor:pointer;font-size:13px;font-weight:500;transition:all .2s}
+  .mtog.active{background:var(--accent);color:#fff}
+  /* Cloud config */
+  #cloud-config{display:none;flex-direction:column;gap:8px}
+  .sh-select{width:100%;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px}
+  .sh-row{display:flex;gap:8px}
+  .sh-btn{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
+  /* System prompt */
+  #sysprompt{width:100%;background:var(--surface2);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;padding:9px 10px;
+    font-size:13px;resize:none;min-height:60px;max-height:120px;
+    font-family:inherit;line-height:1.4;outline:none}
+  #sysprompt:focus{border-color:var(--accent)}
+  /* History in sheet */
+  .hi{padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer;
+    display:flex;align-items:center;gap:8px;background:none;border-left:none;border-right:none;
+    border-top:none;width:100%;text-align:left}
+  .hi:last-child{border-bottom:none}
+  .hi-body{flex:1;min-width:0}
+  .hi-title{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+  .hi-del{background:none;border:none;color:var(--muted);cursor:pointer;
+    font-size:16px;padding:6px;border-radius:6px;flex-shrink:0}
+  .hi-del:active{color:var(--red)}
+  #hist-empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center}
+
+  /* ── Dialogs ── */
   #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);
-    z-index:200;align-items:center;justify-content:center;padding:20px}
+    z-index:700;align-items:center;justify-content:center;padding:20px}
   #overlay.show{display:flex}
   #dialog{background:var(--surface);border:1px solid var(--border);
     border-radius:12px;padding:22px;width:100%;max-width:340px;
@@ -131,92 +191,15 @@
   #dialog p{color:var(--muted);font-size:12px}
   #dialog-input{background:var(--surface2);color:var(--text);
     border:1px solid var(--border);border-radius:8px;
-    padding:9px 12px;font-size:13px;width:100%;font-family:monospace}
-  #dialog-input:focus{outline:none;border-color:var(--accent)}
+    padding:9px 12px;font-size:13px;width:100%;font-family:monospace;outline:none}
+  #dialog-input:focus{border-color:var(--accent)}
   #dialog-btns{display:flex;gap:8px;justify-content:flex-end}
   .dlg-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);
     background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
   .dlg-ok{padding:7px 16px;border-radius:8px;border:none;
     background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600}
-  .dlg-ok:hover{background:var(--accent2)}
 
-  /* Error toast */
-  #err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-    background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;
-    font-size:12px;display:none;z-index:300;max-width:90%;text-align:center}
-
-  /* Full-screen state screens */
-  .screen{display:none;position:fixed;inset:0;z-index:400;background:var(--bg);
-    flex-direction:column;align-items:center;justify-content:center;
-    padding:32px 24px;gap:18px;text-align:center}
-  .screen.active{display:flex}
-  .screen-icon{font-size:40px;opacity:.7}
-  .screen h2{font-size:20px;font-weight:700;color:var(--text)}
-  .screen p{font-size:13px;color:var(--muted);max-width:300px;line-height:1.5}
-  .screen-btn{padding:12px 28px;border-radius:10px;border:none;background:var(--accent);
-    color:#fff;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:300px}
-  .screen-btn:hover{background:var(--accent2)}
-  .screen-btn.sec{background:transparent;border:1px solid var(--border);color:var(--muted)}
-  .screen-btn.sec:hover{border-color:var(--accent2);color:var(--accent2)}
-  .model-list{width:100%;max-width:340px;display:flex;flex-direction:column;
-    gap:8px;max-height:40vh;overflow-y:auto}
-  .model-item{background:var(--surface);border:1px solid var(--border);
-    border-radius:10px;padding:12px 16px;cursor:pointer;text-align:left;
-    font-size:13px;color:var(--text);transition:border-color .15s}
-  .model-item:hover{border-color:var(--accent2)}
-  .model-item small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
-  .folder-row{display:flex;gap:6px;width:100%;max-width:340px;align-items:center}
-  .folder-input{flex:1;background:var(--surface2);border:1px solid var(--border);
-    border-radius:8px;padding:8px 10px;color:var(--text);font-size:11px;
-    font-family:monospace;min-width:0}
-  .folder-input:focus{outline:none;border-color:var(--accent)}
-  .folder-btn{padding:8px 12px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px;
-    white-space:nowrap;flex-shrink:0}
-  .folder-btn:hover{background:var(--surface2)}
-
-  /* Theme panel */
-  #theme-panel{position:fixed;bottom:60px;right:14px;background:var(--surface);
-    border:1px solid var(--border);border-radius:14px;padding:14px 16px;
-    display:none;z-index:500;box-shadow:0 4px 24px rgba(0,0,0,.5);
-    flex-direction:column;gap:10px;min-width:180px}
-  #theme-panel.show{display:flex}
-  #theme-panel h4{font-size:12px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.5px;margin:0}
-  .theme-swatches{display:flex;gap:8px;flex-wrap:wrap}
-  .swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;
-    border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
-  .swatch.active{border-color:var(--text)}
-  .swatch:hover{transform:scale(1.2)}
-
-  /* History drawer */
-  #hist-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55)}
-  #hist-overlay.show{display:block}
-  #hist-drawer{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:300px;
-    background:var(--surface);border-right:1px solid var(--border);
-    display:flex;flex-direction:column;z-index:601;
-    transform:translateX(-100%);transition:transform .25s ease}
-  #hist-overlay.show #hist-drawer{transform:translateX(0)}
-  #hist-head{padding:14px 16px;border-bottom:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-  #hist-head h3{font-size:15px;font-weight:600;color:var(--text);margin:0}
-  #hist-close{background:none;border:none;color:var(--muted);font-size:22px;
-    cursor:pointer;padding:0 2px;line-height:1}
-  #hist-list{flex:1;overflow-y:auto;padding:8px}
-  #hist-empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:13px}
-  .hi{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:2px;
-    position:relative;display:block;width:100%;text-align:left;
-    background:none;border:none}
-  .hi:hover{background:var(--surface2)}
-  .hi-title{font-size:13px;color:var(--text);overflow:hidden;
-    text-overflow:ellipsis;white-space:nowrap;display:block;padding-right:24px}
-  .hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
-  .hi-del{position:absolute;right:8px;top:50%;transform:translateY(-50%);
-    background:none;border:none;color:var(--muted);cursor:pointer;
-    font-size:14px;padding:4px;border-radius:4px;line-height:1}
-  .hi-del:hover{color:var(--red);background:var(--surface2)}
-
-  /* Memory warning */
+  /* ── Memory warning ── */
   #mem-warn{position:fixed;top:0;left:0;right:0;z-index:800;
     background:#92400e;color:#fef3c7;padding:12px 16px;
     display:none;flex-direction:column;align-items:center;gap:10px;text-align:center}
@@ -228,16 +211,15 @@
   .mw-cancel{padding:7px 20px;border-radius:8px;border:1px solid #b45309;
     background:transparent;color:#fef3c7;cursor:pointer;font-size:13px}
 
-  /* Icon buttons in header */
-  .icon-btn{padding:5px 8px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:14px;
-    white-space:nowrap;line-height:1}
-  .icon-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+  /* ── Toast ── */
+  #err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;
+    font-size:12px;display:none;z-index:900;max-width:90%;text-align:center}
 </style>
 </head>
 <body>
 
-<!-- Memory warning bar -->
+<!-- Memory warning -->
 <div id="mem-warn">
   <p id="mem-warn-text"></p>
   <div class="mw-btns">
@@ -246,89 +228,51 @@
   </div>
 </div>
 
-<!-- Theme panel -->
-<div id="theme-panel">
-  <h4>Theme</h4>
-  <div class="theme-swatches">
-    <div class="swatch" id="sw-dark"   style="background:#0f1117" title="Dark"   onclick="setTheme('dark')"></div>
-    <div class="swatch" id="sw-amoled" style="background:#000000" title="AMOLED" onclick="setTheme('amoled')"></div>
-    <div class="swatch" id="sw-navy"   style="background:#0a1628" title="Navy"   onclick="setTheme('navy')"></div>
-    <div class="swatch" id="sw-forest" style="background:#0d1a0e" title="Forest" onclick="setTheme('forest')"></div>
-    <div class="swatch" id="sw-sunset" style="background:#1a0a0e" title="Sunset" onclick="setTheme('sunset')"></div>
-    <div class="swatch" id="sw-light"  style="background:#f1f5f9;border:1px solid #cbd5e1" title="Light" onclick="setTheme('light')"></div>
-  </div>
-</div>
-
-<!-- History drawer -->
-<div id="hist-overlay" onclick="histOverlayClick(event)">
-  <div id="hist-drawer">
-    <div id="hist-head">
-      <h3>Conversations</h3>
-      <button id="hist-close" onclick="closeHistory()">✕</button>
-    </div>
-    <div id="hist-list"></div>
-  </div>
-</div>
-
-<!-- Model picker screen -->
+<!-- ── Model picker screen ── -->
 <div id="screen-picker" class="screen">
-  <div class="screen-icon">📂</div>
-  <h2>Choose a Model</h2>
-  <div class="folder-row">
-    <input class="folder-input" id="folder-input" type="text" placeholder="/path/to/models" spellcheck="false" autocapitalize="none"/>
-    <button class="folder-btn" onclick="browseFolders()">📁</button>
-    <button class="folder-btn" onclick="rescanFolder()">Scan</button>
+  <div id="picker-header">
+    <span id="picker-title">Choose a Model</span>
+    <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
   </div>
-  <div id="model-list" class="model-list"></div>
-  <button class="screen-btn sec" onclick="rescanFolder()">↻ Refresh</button>
-  <button class="screen-btn sec" onclick="searchEntirePhone()" style="margin-top:4px">🔍 Search entire phone</button>
+  <div class="picker-body">
+    <div class="folder-row">
+      <input class="folder-input" id="folder-input" type="text"
+        placeholder="/storage/emulated/0/Download"
+        spellcheck="false" autocapitalize="none"/>
+      <button class="folder-btn" onclick="browseFolders()">📁</button>
+      <button class="folder-btn" onclick="rescanFolder()">Scan</button>
+    </div>
+    <div id="model-list" class="model-list"></div>
+    <button class="sec-btn" onclick="rescanFolder()">↻ Refresh</button>
+    <button class="sec-btn" onclick="searchEntirePhone()">🔍 Search entire phone</button>
+  </div>
 </div>
 
-<!-- Loading screen -->
+<!-- ── Loading screen ── -->
 <div id="screen-loading" class="screen">
   <div class="screen-icon">⏳</div>
   <h2 id="loading-title">Loading Model…</h2>
   <p id="loading-msg">This may take 30–60 seconds depending on model size.</p>
 </div>
 
+<!-- ── Main app ── -->
 <div id="app">
 
-  <!-- Header -->
   <div id="header">
-    <div id="header-top">
+    <div id="header-row1">
       <span id="app-title">Multi-Model Chat</span>
-      <div id="mode-btns">
-        <button class="mode-btn active" id="btn-local" onclick="setMode('local')">Local</button>
-        <button class="mode-btn" id="btn-cloud" onclick="setMode('cloud')">Cloud</button>
+      <div id="header-btns">
+        <button class="hbtn" onclick="newChat()" title="New chat">✏️</button>
+        <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
       </div>
-      <button class="icon-btn" onclick="showHistory()" title="History">🕐</button>
-      <button class="icon-btn" onclick="toggleThemePanel()" title="Theme">🎨</button>
-      <button id="new-chat-btn" onclick="newChat()">+ New</button>
     </div>
-
-    <!-- Local info row -->
-    <div id="local-info">
-      <span id="model-name-label">Initializing…</span>
-      <button id="change-model-btn" onclick="doChangeModel()" style="display:none">Change Model</button>
-    </div>
-
-    <!-- Cloud model row -->
-    <div id="cloud-model-row">
-      <select id="model-select" onchange="saveCloudModel()"></select>
-      <button id="add-model-btn" onclick="showAddModelDialog()">+ Model</button>
-      <button id="apikey-btn" onclick="showApikeyScreen()">🔑 Key</button>
-    </div>
-
-    <!-- System prompt -->
-    <div id="sysprompt-row">
-      <textarea id="sysprompt" rows="1" placeholder="System prompt (optional)…"
-        oninput="autoResize(this)"></textarea>
+    <div id="header-row2" style="display:none">
+      <span id="model-name-label"></span>
+      <button id="change-model-btn" onclick="doChangeModel()">Change Model</button>
     </div>
   </div>
 
-  <!-- API Key screen (shown when cloud + no key) -->
   <div id="apikey-screen">
-    <div class="ak-icon">🔑</div>
     <h2>Anthropic API Key</h2>
     <p>Enter your API key to use Claude models. Stored locally on your device only.</p>
     <input id="apikey-input" type="password" placeholder="sk-ant-…" autocomplete="off"
@@ -336,15 +280,13 @@
     <button id="apikey-save-btn" onclick="saveApiKey()">Save Key &amp; Continue</button>
   </div>
 
-  <!-- Messages -->
   <div id="messages">
     <div id="empty-state">
       <div class="es-icon">💬</div>
-      <p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p>
+      <p>Start a conversation. Use Local mode for offline AI or Cloud mode for Claude API.</p>
     </div>
   </div>
 
-  <!-- Token usage bar (cloud) -->
   <div id="token-bar">
     <span class="tok-item">In: <span class="tok-val" id="tok-in">0</span></span>
     <span class="tok-item">Out: <span class="tok-val" id="tok-out">0</span></span>
@@ -353,7 +295,6 @@
     </span>
   </div>
 
-  <!-- Input -->
   <div id="input-row">
     <textarea id="user-input" rows="1" placeholder="Type a message… (Enter to send)"
       oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
@@ -362,11 +303,83 @@
 
 </div>
 
+<!-- ── Settings sheet ── -->
+<div id="settings-overlay" onclick="settingsOverlayClick(event)">
+  <div id="settings-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Settings</div>
+
+    <!-- Theme -->
+    <div class="sheet-section">
+      <div class="sheet-label">Theme</div>
+      <div class="theme-grid">
+        <div>
+          <div class="swatch" id="sw-dark"   style="background:#0f1117" onclick="setTheme('dark')"></div>
+          <div class="swatch-label">Dark</div>
+        </div>
+        <div>
+          <div class="swatch" id="sw-amoled" style="background:#000" onclick="setTheme('amoled')"></div>
+          <div class="swatch-label">AMOLED</div>
+        </div>
+        <div>
+          <div class="swatch" id="sw-navy"   style="background:#0a1628" onclick="setTheme('navy')"></div>
+          <div class="swatch-label">Navy</div>
+        </div>
+        <div>
+          <div class="swatch" id="sw-forest" style="background:#0d1a0e" onclick="setTheme('forest')"></div>
+          <div class="swatch-label">Forest</div>
+        </div>
+        <div>
+          <div class="swatch" id="sw-sunset" style="background:#1a0a0e" onclick="setTheme('sunset')"></div>
+          <div class="swatch-label">Sunset</div>
+        </div>
+        <div>
+          <div class="swatch" id="sw-light"  style="background:#f1f5f9;border:2px solid #cbd5e1" onclick="setTheme('light')"></div>
+          <div class="swatch-label">Light</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode -->
+    <div class="sheet-section">
+      <div class="sheet-label">AI Mode</div>
+      <div class="mode-toggle">
+        <button class="mtog active" id="mtog-local" onclick="setMode('local')">🤖 Local (Offline)</button>
+        <button class="mtog" id="mtog-cloud" onclick="setMode('cloud')">☁️ Cloud (Claude API)</button>
+      </div>
+    </div>
+
+    <!-- Cloud config (shown when cloud mode) -->
+    <div class="sheet-section" id="cloud-config-section" style="display:none">
+      <div class="sheet-label">Cloud Model &amp; API Key</div>
+      <select class="sh-select" id="model-select" onchange="saveCloudModel()"></select>
+      <div class="sh-row" style="margin-top:8px">
+        <button class="sh-btn" onclick="showAddModelDialog()">+ Add Model</button>
+        <button class="sh-btn" onclick="showApikeyScreen()">🔑 API Key</button>
+      </div>
+    </div>
+
+    <!-- System prompt -->
+    <div class="sheet-section">
+      <div class="sheet-label">System Prompt</div>
+      <textarea id="sysprompt" rows="3" placeholder="Give the AI a persona or instructions…"
+        oninput="autoResize(this)"></textarea>
+    </div>
+
+    <!-- History -->
+    <div class="sheet-section">
+      <div class="sheet-label">Conversation History</div>
+      <div id="hist-list"></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- Add custom model dialog -->
 <div id="overlay" onclick="overlayClick(event)">
   <div id="dialog">
     <h3>Add Custom Model</h3>
-    <p>Enter any Claude model ID (e.g. claude-opus-4-20250514)</p>
+    <p>Enter any Claude model ID (e.g. claude-opus-4-7)</p>
     <input id="dialog-input" type="text" placeholder="claude-…"
       autocapitalize="none" spellcheck="false"
       onkeydown="if(event.key==='Enter')confirmAddModel()"/>
@@ -386,10 +399,10 @@ var localPort = AB ? AB.getLocalPort() : 8080;
 
 // ── Constants ───────────────────────────────────────────────────────────────
 var BUILTIN_MODELS = [
-  {id:'claude-opus-4-20250514',  label:'Opus 4.7'},
-  {id:'claude-opus-4-5',         label:'Opus 4.6'},
-  {id:'claude-sonnet-4-5',       label:'Sonnet 4.6'},
-  {id:'claude-haiku-4-5',        label:'Haiku 4.5'},
+  {id:'claude-opus-4-7',   label:'Opus 4.7'},
+  {id:'claude-opus-4-5',   label:'Opus 4.6'},
+  {id:'claude-sonnet-4-5', label:'Sonnet 4.6'},
+  {id:'claude-haiku-4-5',  label:'Haiku 4.5'},
 ];
 
 // ── State ───────────────────────────────────────────────────────────────────
@@ -398,27 +411,33 @@ var messages = [];
 var streaming = false;
 var abortCtrl = null;
 var tokIn = 0, tokOut = 0, tokCache = 0;
+var _modelName = '';
+var _convId = null;
+var _pendingModelPath = null;
 
-// ── Screen management ───────────────────────────────────────────────────────
-var SCREENS = ['screen-picker','screen-loading'];
+// ── Themes ───────────────────────────────────────────────────────────────────
+var THEMES = {
+  dark:   {'--bg':'#0f1117','--surface':'#1a1d27','--surface2':'#22263a','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#2d3348','--user-bg':'#312e81','--asst-bg':'#1e2235','--red':'#ef4444','--green':'#22c55e'},
+  amoled: {'--bg':'#000000','--surface':'#0d0d0d','--surface2':'#141414','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#1c1c1c','--user-bg':'#1a1450','--asst-bg':'#080b14','--red':'#ef4444','--green':'#22c55e'},
+  navy:   {'--bg':'#0a1628','--surface':'#102040','--surface2':'#162a52','--accent':'#3b82f6','--accent2':'#60a5fa','--text':'#e2e8f0','--muted':'#8ba3c7','--border':'#1e3660','--user-bg':'#1e3870','--asst-bg':'#0e1e3a','--red':'#ef4444','--green':'#22c55e'},
+  forest: {'--bg':'#0d1a0e','--surface':'#152418','--surface2':'#1c2e20','--accent':'#22c55e','--accent2':'#4ade80','--text':'#e2e8f0','--muted':'#86a892','--border':'#253c28','--user-bg':'#1a3520','--asst-bg':'#121f14','--red':'#ef4444','--green':'#4ade80'},
+  sunset: {'--bg':'#1a0a0e','--surface':'#2a1018','--surface2':'#381620','--accent':'#f97316','--accent2':'#fb923c','--text':'#f0e6ea','--muted':'#c09aa8','--border':'#4a1f2c','--user-bg':'#4a1a28','--asst-bg':'#200d12','--red':'#fb7185','--green':'#4ade80'},
+  light:  {'--bg':'#f8fafc','--surface':'#ffffff','--surface2':'#f1f5f9','--accent':'#6366f1','--accent2':'#4f46e5','--text':'#1e293b','--muted':'#64748b','--border':'#e2e8f0','--user-bg':'#e0e7ff','--asst-bg':'#f1f5f9','--red':'#dc2626','--green':'#16a34a'},
+};
 
-function showScreen(id) {
-  for (var i = 0; i < SCREENS.length; i++) {
-    var el = document.getElementById(SCREENS[i]);
-    if (el) el.classList.toggle('active', SCREENS[i] === id);
-  }
+function setTheme(name) {
+  var t = THEMES[name] || THEMES.dark;
+  var root = document.documentElement;
+  for (var k in t) root.style.setProperty(k, t[k]);
+  localStorage.setItem('theme', name);
+  document.querySelectorAll('.swatch').forEach(function(el) {
+    el.classList.toggle('active', el.id === 'sw-' + name);
+  });
 }
 
-function hideScreens() {
-  for (var i = 0; i < SCREENS.length; i++) {
-    var el = document.getElementById(SCREENS[i]);
-    if (el) el.classList.remove('active');
-  }
-}
-
-// ── Boot ────────────────────────────────────────────────────────────────────
+// ── Boot ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
-  initTheme();
+  setTheme(localStorage.getItem('theme') || 'dark');
   populateModelSelect();
   var saved = localStorage.getItem('cloud_model');
   if (saved) {
@@ -428,7 +447,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
   if (!AB) {
     hideScreens();
-    applyMode('local');
+    setMode('local');
     setLocalModelName('Browser mode');
     return;
   }
@@ -439,227 +458,56 @@ window.addEventListener('DOMContentLoaded', function() {
     loadFolderInput();
     rescanFolder();
   } else if (status.indexOf('ready:') === 0) {
-    var name = status.slice(6);
     hideScreens();
-    applyMode('local');
-    setLocalModelName(name);
-    document.getElementById('change-model-btn').style.display = 'inline-block';
+    setLocalModelName(status.slice(6));
+    setMode('local');
   }
 });
 
-// ── Model picker ─────────────────────────────────────────────────────────────
-function loadFolderInput() {
-  var inp = document.getElementById('folder-input');
-  var saved = localStorage.getItem('models_folder');
-  if (saved && AB && !AB.pathExists(saved)) {
-    localStorage.removeItem('models_folder');
-    saved = null;
-  }
-  if (!saved && AB) saved = AB.getDefaultModelsPath();
-  inp.value = saved || '';
+// ── Screens ──────────────────────────────────────────────────────────────────
+var SCREENS = ['screen-picker','screen-loading'];
+function showScreen(id) {
+  SCREENS.forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.classList.toggle('active', s === id);
+  });
+}
+function hideScreens() {
+  SCREENS.forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.classList.remove('active');
+  });
 }
 
-function rescanFolder() {
-  var inp = document.getElementById('folder-input');
-  var folder = inp.value.trim();
-  var list = document.getElementById('model-list');
-  if (!folder) {
-    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Enter a folder path above.</div>';
-    return;
-  }
-  localStorage.setItem('models_folder', folder);
-  list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Scanning…</div>';
-
-  var raw = AB ? AB.getModelList(folder) : '';
-  list.innerHTML = '';
-
-  if (!raw) {
-    var folderExists = AB ? AB.pathExists(folder) : true;
-    var needsPerm = AB && AB.getStorageStatus() !== 'ok';
-    var msg, hint;
-    if (!folderExists) {
-      msg = 'Folder not found: ' + folder;
-      hint = 'Tap 📁 to browse to where your model files are stored.';
-    } else if (needsPerm) {
-      msg = 'Cannot read this folder.';
-      hint = 'Tap Grant Storage Access below, then come back and scan again.';
-    } else {
-      msg = 'No .gguf files in this folder.';
-      hint = 'Make sure your model files end in .gguf, or tap 📁 to pick a different folder.';
-    }
-    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px;line-height:1.7">' +
-      '<strong style="color:var(--text)">' + esc(msg) + '</strong><br>' + esc(hint) + '</div>';
-    if (needsPerm) {
-      var btn = document.createElement('button');
-      btn.textContent = 'Grant Storage Access';
-      btn.setAttribute('style', 'margin-top:8px;padding:8px 16px;border-radius:8px;border:none;' +
-        'background:var(--accent);color:#fff;font-size:13px;cursor:pointer;width:100%;max-width:300px');
-      btn.onclick = requestStorage;
-      list.appendChild(btn);
-    }
-    return;
-  }
-
-  var lines = raw.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    if (!lines[i]) continue;
-    var parts = lines[i].split('|');
-    var name = parts[0];
-    var path = parts.length > 1 ? parts[1] : parts[0];
-    var item = document.createElement('button');
-    item.className = 'model-item';
-    item.innerHTML = '<strong>' + esc(name) + '</strong>';
-    item.onclick = (function(p) { return function() { selectModel(p); }; })(path);
-    list.appendChild(item);
-  }
+// ── Settings sheet ────────────────────────────────────────────────────────────
+function openSettings() {
+  renderHistoryList();
+  document.getElementById('settings-overlay').classList.add('show');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('show');
+}
+function settingsOverlayClick(e) {
+  if (e.target.id === 'settings-overlay') closeSettings();
 }
 
-function requestStorage() {
-  if (AB) AB.requestStorageAccess();
-}
-
-function onStorageGranted() {
-  rescanFolder();
-}
-
-function onAppResume() {
-  var screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'screen-picker') {
-    rescanFolder();
-  }
-}
-
-function selectModel(path) {
-  if (!AB) return;
-  if (!AB.pathExists(path)) {
-    showErr('Cannot access: ' + path);
-    return;
-  }
-  AB.loadModel(path);
-}
-
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ── Model loading callbacks (called by Java via evaluateJavascript) ──────────
-function onModelLoading(name) {
-  var s = document.getElementById('screen-loading');
-  var back = s.querySelector('.load-back');
-  if (back) back.remove();
-  document.getElementById('loading-title').style.color = '';
-  document.getElementById('loading-title').textContent = 'Loading Model…';
-  document.getElementById('loading-msg').textContent = 'Loading ' + name + '\nThis may take 30–60 seconds.';
-  showScreen('screen-loading');
-}
-
-function onModelReady(name) {
-  hideScreens();
-  applyMode('local');
-  setLocalModelName(name);
-  document.getElementById('change-model-btn').style.display = 'inline-block';
-}
-
-function onModelError(msg) {
-  var log = AB ? AB.getLastError() : '';
-  var full = msg + (log ? '\n\n' + log : '');
-  document.getElementById('loading-title').style.color = 'var(--red)';
-  document.getElementById('loading-title').textContent = 'Failed to Load';
-  document.getElementById('loading-msg').textContent = full;
-  var s = document.getElementById('screen-loading');
-  if (!s.querySelector('.load-back')) {
-    var btn = document.createElement('button');
-    btn.className = 'screen-btn sec load-back';
-    btn.textContent = '← Back to model list';
-    btn.onclick = onShowModelPicker;
-    s.appendChild(btn);
-  }
-}
-
-function onShowModelPicker() {
-  showScreen('screen-picker');
-  loadFolderInput();
-  rescanFolder();
-}
-
-function browseFolders() {
-  if (AB) AB.browseFolders();
-}
-
-function onFolderSelected(path) {
-  document.getElementById('folder-input').value = path;
-  rescanFolder();
-}
-
-function onFolderSelectFailed() {
-  showErr('Could not read folder path from picker — try typing it manually');
-}
-
-function searchEntirePhone() {
-  var list = document.getElementById('model-list');
-  list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Searching entire device…</div>';
-  var raw = AB ? AB.findAllGgufFiles() : '';
-  list.innerHTML = '';
-  if (!raw) {
-    var roots = AB ? AB.getStorageRoots() : '';
-    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;line-height:1.6">' +
-      'No .gguf files found on device.<br>' +
-      '<pre style="margin-top:8px;font-size:10px;background:var(--surface2);padding:8px;' +
-      'border-radius:6px;white-space:pre-wrap;word-break:break-all;text-align:left">' +
-      esc(roots) + '</pre></div>';
-    return;
-  }
-  var lines = raw.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    if (!lines[i]) continue;
-    var parts = lines[i].split('|');
-    var name = parts[0];
-    var path = parts.length > 1 ? parts[1] : parts[0];
-    var item = document.createElement('button');
-    item.className = 'model-item';
-    item.innerHTML = '<strong>' + esc(name) + '</strong>' +
-      '<small>' + esc(path) + '</small>';
-    item.onclick = (function(p) { return function() { selectModel(p); }; })(path);
-    list.appendChild(item);
-  }
-}
-
-var _modelName = '';
-function setLocalModelName(name) {
-  _modelName = name || '';
-  document.getElementById('model-name-label').textContent = name ? '🤖 ' + name : 'No model';
-}
-
-// ── Mode switching ──────────────────────────────────────────────────────────
+// ── Mode ──────────────────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
-  applyMode(m);
-}
+  document.getElementById('mtog-local').classList.toggle('active', m === 'local');
+  document.getElementById('mtog-cloud').classList.toggle('active', m === 'cloud');
+  document.getElementById('cloud-config-section').style.display = m === 'cloud' ? 'block' : 'none';
+  document.getElementById('token-bar').style.display = m === 'cloud' ? 'flex' : 'none';
 
-function applyMode(m) {
-  mode = m;
-  document.getElementById('btn-local').classList.toggle('active', m === 'local');
-  document.getElementById('btn-cloud').classList.toggle('active', m === 'cloud');
-
-  var localInfo    = document.getElementById('local-info');
-  var cloudRow     = document.getElementById('cloud-model-row');
-  var apikeyScr    = document.getElementById('apikey-screen');
-  var messagesEl   = document.getElementById('messages');
-  var inputRow     = document.getElementById('input-row');
-  var tokenBar     = document.getElementById('token-bar');
+  var apikeyScr = document.getElementById('apikey-screen');
+  var messagesEl = document.getElementById('messages');
+  var inputRow = document.getElementById('input-row');
 
   if (m === 'local') {
-    localInfo.style.display  = 'flex';
-    cloudRow.style.display   = 'none';
     apikeyScr.style.display  = 'none';
     messagesEl.style.display = 'flex';
     inputRow.style.display   = 'flex';
-    tokenBar.style.display   = 'none';
-    document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
   } else {
-    localInfo.style.display  = 'none';
-    cloudRow.style.display   = 'flex';
-    tokenBar.style.display   = 'flex';
     var key = localStorage.getItem('anthropic_key') || '';
     if (!key) {
       showApikeyScreen();
@@ -675,8 +523,8 @@ function showApikeyScreen() {
   document.getElementById('apikey-screen').style.display  = 'flex';
   document.getElementById('messages').style.display       = 'none';
   document.getElementById('input-row').style.display      = 'none';
+  closeSettings();
 }
-
 function saveApiKey() {
   var v = document.getElementById('apikey-input').value.trim();
   if (!v.startsWith('sk-')) { showErr('Key must start with sk-ant-…'); return; }
@@ -686,78 +534,268 @@ function saveApiKey() {
   document.getElementById('input-row').style.display      = 'flex';
 }
 
-// ── Local model controls ────────────────────────────────────────────────────
+// ── Model name ────────────────────────────────────────────────────────────────
+function setLocalModelName(name) {
+  _modelName = name || '';
+  var row2 = document.getElementById('header-row2');
+  if (name) {
+    document.getElementById('model-name-label').textContent = '🤖 ' + name;
+    row2.style.display = 'flex';
+    document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
+  } else {
+    row2.style.display = 'none';
+  }
+}
 function doChangeModel() {
   if (AB) AB.changeModel();
 }
 
-// ── Cloud model selector ────────────────────────────────────────────────────
-function populateModelSelect() {
-  var sel = document.getElementById('model-select');
-  sel.innerHTML = '';
-  var custom = getCustomModels();
-  var all = BUILTIN_MODELS.concat(custom.map(function(id){ return {id:id, label:id}; }));
-  all.forEach(function(m) {
-    var o = document.createElement('option');
-    o.value = m.id; o.textContent = m.label || m.id;
-    sel.appendChild(o);
+// ── Model picker ──────────────────────────────────────────────────────────────
+function loadFolderInput() {
+  var inp = document.getElementById('folder-input');
+  var saved = localStorage.getItem('models_folder');
+  if (saved && AB && !AB.pathExists(saved)) { localStorage.removeItem('models_folder'); saved = null; }
+  if (!saved && AB) saved = AB.getDefaultModelsPath();
+  inp.value = saved || '';
+}
+
+function rescanFolder() {
+  var inp = document.getElementById('folder-input');
+  var folder = inp.value.trim();
+  var list = document.getElementById('model-list');
+  if (!folder) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Enter a folder path above.</div>';
+    return;
+  }
+  localStorage.setItem('models_folder', folder);
+  list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Scanning…</div>';
+  var raw = AB ? AB.getModelList(folder) : '';
+  list.innerHTML = '';
+  if (!raw) {
+    var folderExists = AB ? AB.pathExists(folder) : true;
+    var needsPerm = AB && AB.getStorageStatus() !== 'ok';
+    var msg = !folderExists ? 'Folder not found: ' + folder
+            : needsPerm    ? 'Cannot read this folder.'
+            :                'No .gguf files in this folder.';
+    var hint = !folderExists ? 'Tap 📁 to browse to where your model files are.'
+             : needsPerm     ? 'Tap Grant Storage Access below.'
+             :                 'Make sure files end in .gguf, or tap 📁 to pick a different folder.';
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px;line-height:1.7">' +
+      '<strong style="color:var(--text)">' + esc(msg) + '</strong><br>' + esc(hint) + '</div>';
+    if (needsPerm) {
+      var btn = document.createElement('button');
+      btn.textContent = 'Grant Storage Access';
+      btn.className = 'sec-btn';
+      btn.style.marginTop = '8px';
+      btn.onclick = function(){ if(AB) AB.requestStorageAccess(); };
+      list.appendChild(btn);
+    }
+    return;
+  }
+  raw.split('\n').forEach(function(line) {
+    if (!line) return;
+    var parts = line.split('|');
+    var name = parts[0], path = parts[1] || parts[0];
+    var item = document.createElement('button');
+    item.className = 'model-item';
+    item.innerHTML = '<strong>' + esc(name) + '</strong>';
+    item.onclick = function(){ selectModel(path); };
+    list.appendChild(item);
   });
 }
 
-function saveCloudModel() {
-  var sel = document.getElementById('model-select');
-  localStorage.setItem('cloud_model', sel.value);
+function browseFolders() { if (AB) AB.browseFolders(); }
+function onFolderSelected(path) { document.getElementById('folder-input').value = path; rescanFolder(); }
+function onFolderSelectFailed() { showErr('Could not read folder path — try typing it manually'); }
+function onStorageGranted() { rescanFolder(); }
+function onAppResume() {
+  var s = document.querySelector('.screen.active');
+  if (s && s.id === 'screen-picker') rescanFolder();
 }
 
-function getCustomModels() {
-  try { return JSON.parse(localStorage.getItem('custom_models') || '[]'); }
+function searchEntirePhone() {
+  var list = document.getElementById('model-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Searching entire device…</div>';
+  var raw = AB ? AB.findAllGgufFiles() : '';
+  list.innerHTML = '';
+  if (!raw) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">No .gguf files found on device.</div>';
+    return;
+  }
+  raw.split('\n').forEach(function(line) {
+    if (!line) return;
+    var parts = line.split('|');
+    var name = parts[0], path = parts[1] || parts[0];
+    var item = document.createElement('button');
+    item.className = 'model-item';
+    item.innerHTML = '<strong>' + esc(name) + '</strong><small>' + esc(path) + '</small>';
+    item.onclick = function(){ selectModel(path); };
+    list.appendChild(item);
+  });
+}
+
+// ── Memory warning ────────────────────────────────────────────────────────────
+function estimateRam(filename) {
+  var m = filename.toLowerCase().match(/[_\-\s\.](\d+(?:\.\d+)?)[x]?b[_\-\s\.q]/);
+  if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b[_\-\.q]/);
+  if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b$/);
+  if (!m) return null;
+  var p = parseFloat(m[1]);
+  if (p < 0.5 || p > 300) return null;
+  return {params: p, gb: Math.ceil(p * 0.6)};
+}
+
+function selectModel(path) {
+  if (!AB) return;
+  if (!AB.pathExists(path)) { showErr('Cannot access: ' + path); return; }
+  var ram = estimateRam(path.split('/').pop());
+  if (ram && ram.gb >= 3) {
+    _pendingModelPath = path;
+    document.getElementById('mem-warn-text').textContent =
+      'Loading this model (~' + ram.params + 'B) may need ' + ram.gb + '+ GB of free RAM. ' +
+      (ram.gb >= 8 ? 'Close all other apps first.' : 'Make sure other apps are closed.');
+    document.getElementById('mem-warn').classList.add('show');
+  } else {
+    AB.loadModel(path);
+  }
+}
+function confirmMemWarn() {
+  document.getElementById('mem-warn').classList.remove('show');
+  if (_pendingModelPath && AB) AB.loadModel(_pendingModelPath);
+  _pendingModelPath = null;
+}
+function cancelMemWarn() {
+  document.getElementById('mem-warn').classList.remove('show');
+  _pendingModelPath = null;
+}
+
+// ── Model loading callbacks ───────────────────────────────────────────────────
+function onModelLoading(name) {
+  var s = document.getElementById('screen-loading');
+  var back = s.querySelector('.screen-btn-back');
+  if (back) back.remove();
+  s.querySelector('h2').style.color = '';
+  document.getElementById('loading-title').textContent = 'Loading Model…';
+  document.getElementById('loading-msg').textContent = 'Loading ' + name + '\nThis may take 30–60 seconds.';
+  showScreen('screen-loading');
+}
+function onModelReady(name) {
+  hideScreens();
+  setLocalModelName(name);
+  setMode('local');
+}
+function onModelError(msg) {
+  var log = AB ? AB.getLastError() : '';
+  document.getElementById('loading-title').style.color = 'var(--red)';
+  document.getElementById('loading-title').textContent = 'Failed to Load';
+  document.getElementById('loading-msg').textContent = msg + (log ? '\n\n' + log : '');
+  var s = document.getElementById('screen-loading');
+  if (!s.querySelector('.screen-btn-back')) {
+    var btn = document.createElement('button');
+    btn.className = 'screen-btn-back';
+    btn.textContent = '← Back to model list';
+    btn.onclick = onShowModelPicker;
+    s.appendChild(btn);
+  }
+}
+function onShowModelPicker() {
+  showScreen('screen-picker');
+  loadFolderInput();
+  rescanFolder();
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('chat_history') || '[]'); }
   catch(e) { return []; }
 }
-
-function saveCustomModelsList(arr) {
-  localStorage.setItem('custom_models', JSON.stringify(arr));
-}
-
-function showAddModelDialog() {
-  document.getElementById('dialog-input').value = '';
-  document.getElementById('overlay').classList.add('show');
-  setTimeout(function(){ document.getElementById('dialog-input').focus(); }, 60);
-}
-
-function hideOverlay() {
-  document.getElementById('overlay').classList.remove('show');
-}
-
-function overlayClick(e) {
-  if (e.target.id === 'overlay') hideOverlay();
-}
-
-function confirmAddModel() {
-  var v = document.getElementById('dialog-input').value.trim();
-  if (!v) return;
-  var custom = getCustomModels();
-  if (custom.indexOf(v) === -1) {
-    custom.push(v);
-    saveCustomModelsList(custom);
-    populateModelSelect();
-    var sel = document.getElementById('model-select');
-    // add option and select it
-    sel.value = v;
-    localStorage.setItem('cloud_model', v);
+function saveHistory() {
+  if (!messages.length) return;
+  var history = getHistory();
+  var now = Date.now();
+  var title = messages[0].content.slice(0, 60) + (messages[0].content.length > 60 ? '…' : '');
+  if (_convId) {
+    var found = false;
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].id === _convId) {
+        history[i].messages = messages; history[i].updated = now; history[i].model = _modelName;
+        found = true; break;
+      }
+    }
+    if (!found) history.unshift({id:_convId,title:title,created:_convId,updated:now,model:_modelName,messages:messages});
+  } else {
+    _convId = now;
+    history.unshift({id:_convId,title:title,created:_convId,updated:now,model:_modelName,messages:messages});
   }
-  hideOverlay();
+  if (history.length > 30) history = history.slice(0, 30);
+  localStorage.setItem('chat_history', JSON.stringify(history));
+}
+function renderHistoryList() {
+  var list = document.getElementById('hist-list');
+  var history = getHistory();
+  if (!history.length) {
+    list.innerHTML = '<div id="hist-empty">No saved conversations yet.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  history.forEach(function(h) {
+    var d = new Date(h.updated || h.created);
+    var ds = d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' +
+             d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    var row = document.createElement('div');
+    row.className = 'hi';
+    var body = document.createElement('div');
+    body.className = 'hi-body';
+    body.innerHTML = '<span class="hi-title">' + esc(h.title) + '</span>' +
+      '<span class="hi-meta">' + esc(ds) + (h.model ? ' · ' + esc(h.model) : '') + '</span>';
+    body.onclick = function(){ loadHistoryItem(h); };
+    var del = document.createElement('button');
+    del.className = 'hi-del';
+    del.textContent = '✕';
+    del.onclick = function(e){ e.stopPropagation(); deleteHistoryItem(h.id); };
+    row.appendChild(body);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+function loadHistoryItem(h) {
+  closeSettings();
+  messages = h.messages ? h.messages.slice() : [];
+  _convId = h.id;
+  var el = document.getElementById('messages');
+  el.innerHTML = '';
+  if (!messages.length) {
+    el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div><p>Start a conversation.</p></div>';
+    return;
+  }
+  messages.forEach(function(m) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + m.role;
+    wrap.innerHTML = '<span class="msg-role">' + (m.role==='user'?'You':'Assistant') + '</span><div class="msg-bubble"></div>';
+    wrap.querySelector('.msg-bubble').textContent = m.content;
+    el.appendChild(wrap);
+  });
+  scrollBottom();
+  if (h.model) setLocalModelName(h.model);
+  hideScreens();
+  setMode('local');
+}
+function deleteHistoryItem(id) {
+  var history = getHistory().filter(function(h){ return h.id !== id; });
+  localStorage.setItem('chat_history', JSON.stringify(history));
+  if (_convId === id) _convId = null;
+  renderHistoryList();
 }
 
-// ── Chat ────────────────────────────────────────────────────────────────────
+// ── Chat ──────────────────────────────────────────────────────────────────────
 function newChat() {
-  if (streaming && abortCtrl) { abortCtrl.abort(); }
+  if (streaming && abortCtrl) abortCtrl.abort();
   _convId = null;
   messages = [];
-  var el = document.getElementById('messages');
-  el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div>' +
-    '<p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p></div>';
+  document.getElementById('messages').innerHTML =
+    '<div id="empty-state"><div class="es-icon">💬</div>' +
+    '<p>Start a conversation. Use Local mode for offline AI or Cloud mode for Claude API.</p></div>';
   resetTokenBar();
-  document.getElementById('theme-panel').classList.remove('show');
 }
 
 function addMessage(role, content) {
@@ -766,9 +804,7 @@ function addMessage(role, content) {
   var container = document.getElementById('messages');
   var wrap = document.createElement('div');
   wrap.className = 'msg ' + role;
-  var roleLabel = role === 'user' ? 'You' : 'Assistant';
-  wrap.innerHTML = '<span class="msg-role">' + roleLabel + '</span>' +
-    '<div class="msg-bubble"></div>';
+  wrap.innerHTML = '<span class="msg-role">' + (role==='user'?'You':'Assistant') + '</span><div class="msg-bubble"></div>';
   wrap.querySelector('.msg-bubble').textContent = content;
   container.appendChild(wrap);
   scrollBottom();
@@ -786,67 +822,43 @@ async function sendMessage() {
   var text = inp.value.trim();
   if (!text) return;
   inp.value = ''; autoResize(inp);
-
   messages.push({role:'user', content:text});
   addMessage('user', text);
-
   var btn = document.getElementById('send-btn');
-  btn.disabled = false;
-  btn.textContent = 'Stop';
+  btn.disabled = false; btn.textContent = 'Stop';
   streaming = true;
-
   var bubble = addMessage('assistant', '');
   bubble.classList.add('streaming');
-
   try {
-    if (mode === 'local') {
-      await streamLocal(bubble);
-    } else {
-      await streamCloud(bubble);
-    }
+    if (mode === 'local') await streamLocal(bubble);
+    else await streamCloud(bubble);
   } catch(e) {
-    if (e.name !== 'AbortError') {
-      bubble.textContent += '\n[Error: ' + e.message + ']';
-      showErr(e.message);
-    }
+    if (e.name !== 'AbortError') { bubble.textContent += '\n[Error: ' + e.message + ']'; showErr(e.message); }
   }
-
   bubble.classList.remove('streaming');
-  var finalText = bubble.textContent;
-  messages.push({role:'assistant', content:finalText});
-  streaming = false;
-  abortCtrl = null;
-  btn.textContent = 'Send';
-  btn.disabled = false;
+  messages.push({role:'assistant', content:bubble.textContent});
+  streaming = false; abortCtrl = null;
+  btn.textContent = 'Send'; btn.disabled = false;
   saveHistory();
 }
 
-// ── Local streaming (OpenAI /v1/chat/completions SSE) ──────────────────────
+// ── Local streaming ───────────────────────────────────────────────────────────
 async function streamLocal(bubble) {
   abortCtrl = new AbortController();
   var sys = document.getElementById('sysprompt').value.trim();
-  var msgs = [];
-  if (sys) msgs.push({role:'system', content:sys});
-  msgs = msgs.concat(messages);
-
+  var msgs = sys ? [{role:'system',content:sys}].concat(messages) : messages.slice();
   var resp = await fetch('http://127.0.0.1:' + localPort + '/v1/chat/completions', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({messages: msgs, stream: true, temperature: 0.7}),
-    signal: abortCtrl.signal
+    method:'POST', signal:abortCtrl.signal,
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({messages:msgs, stream:true, temperature:0.7})
   });
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-  var reader = resp.body.getReader();
-  var dec = new TextDecoder();
-  var buf = ''; var text = '';
-
+  var reader = resp.body.getReader(), dec = new TextDecoder(), buf = '', text = '';
   while (true) {
     var chunk = await reader.read();
     if (chunk.done) break;
     buf += dec.decode(chunk.value, {stream:true});
-    var lines = buf.split('\n');
-    buf = lines.pop();
+    var lines = buf.split('\n'); buf = lines.pop();
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
       if (!line.startsWith('data:')) continue;
@@ -855,107 +867,99 @@ async function streamLocal(bubble) {
       try {
         var ev = JSON.parse(raw);
         var delta = ev.choices && ev.choices[0] && ev.choices[0].delta;
-        if (delta && delta.content) {
-          text += delta.content;
-          bubble.textContent = text;
-          scrollBottom();
-        }
-        if (ev.usage) {
-          updateTokenBarLocal(ev.usage.prompt_tokens || 0, ev.usage.completion_tokens || 0);
-        }
+        if (delta && delta.content) { text += delta.content; bubble.textContent = text; scrollBottom(); }
       } catch(e2) {}
     }
   }
 }
 
-// ── Cloud streaming (Anthropic /v1/messages SSE) ───────────────────────────
+// ── Cloud streaming ───────────────────────────────────────────────────────────
 async function streamCloud(bubble) {
   var key = localStorage.getItem('anthropic_key') || '';
   if (!key) { showApikeyScreen(); throw new Error('No API key'); }
-
   abortCtrl = new AbortController();
   var sys = document.getElementById('sysprompt').value.trim();
   var modelId = document.getElementById('model-select').value;
-
-  var body = {
-    model: modelId,
-    max_tokens: 8192,
-    messages: messages.map(function(m){ return {role:m.role, content:m.content}; }),
-    stream: true
-  };
+  var body = {model:modelId, max_tokens:8192,
+    messages:messages.map(function(m){return{role:m.role,content:m.content};}), stream:true};
   if (sys) body.system = sys;
-
   var resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify(body),
-    signal: abortCtrl.signal
+    method:'POST', signal:abortCtrl.signal,
+    headers:{'Content-Type':'application/json','x-api-key':key,
+      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify(body)
   });
-
-  if (!resp.ok) {
-    var errText = await resp.text().catch(function(){ return ''; });
-    throw new Error('HTTP ' + resp.status + ': ' + errText.slice(0, 200));
-  }
-
-  var reader = resp.body.getReader();
-  var dec = new TextDecoder();
-  var buf = ''; var text = ''; var evType = '';
-
+  if (!resp.ok) { var e = await resp.text().catch(function(){return '';}); throw new Error('HTTP ' + resp.status + ': ' + e.slice(0,200)); }
+  var reader = resp.body.getReader(), dec = new TextDecoder(), buf = '', text = '', evType = '';
   while (true) {
     var chunk = await reader.read();
     if (chunk.done) break;
     buf += dec.decode(chunk.value, {stream:true});
-    var lines = buf.split('\n');
-    buf = lines.pop();
+    var lines = buf.split('\n'); buf = lines.pop();
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
-      if (line.startsWith('event:')) {
-        evType = line.slice(6).trim();
-      } else if (line.startsWith('data:')) {
-        var raw = line.slice(5).trim();
-        try {
-          var ev = JSON.parse(raw);
-          if (evType === 'content_block_delta' && ev.delta && ev.delta.text) {
-            text += ev.delta.text;
-            bubble.textContent = text;
-            scrollBottom();
-          }
-          if (evType === 'message_start' && ev.message && ev.message.usage) {
-            var u = ev.message.usage;
-            tokIn += (u.input_tokens || 0);
-            tokCache += ((u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0));
-            refreshTokenBar();
-          }
-          if (evType === 'message_delta' && ev.usage) {
-            tokOut += (ev.usage.output_tokens || 0);
-            refreshTokenBar();
-          }
-        } catch(e2) {}
-      }
+      if (line.startsWith('event:')) { evType = line.slice(6).trim(); continue; }
+      if (!line.startsWith('data:')) continue;
+      try {
+        var ev = JSON.parse(line.slice(5).trim());
+        if (evType === 'content_block_delta' && ev.delta && ev.delta.text) {
+          text += ev.delta.text; bubble.textContent = text; scrollBottom();
+        }
+        if (evType === 'message_start' && ev.message && ev.message.usage) {
+          var u = ev.message.usage;
+          tokIn += (u.input_tokens||0);
+          tokCache += ((u.cache_read_input_tokens||0)+(u.cache_creation_input_tokens||0));
+          refreshTokenBar();
+        }
+        if (evType === 'message_delta' && ev.usage) { tokOut += (ev.usage.output_tokens||0); refreshTokenBar(); }
+      } catch(e2) {}
     }
   }
 }
 
-// ── Token bar ───────────────────────────────────────────────────────────────
+// ── Cloud model selector ──────────────────────────────────────────────────────
+function populateModelSelect() {
+  var sel = document.getElementById('model-select');
+  sel.innerHTML = '';
+  var custom = (function(){ try{return JSON.parse(localStorage.getItem('custom_models')||'[]');}catch(e){return[];} })();
+  BUILTIN_MODELS.concat(custom.map(function(id){return{id:id,label:id};})).forEach(function(m) {
+    var o = document.createElement('option');
+    o.value = m.id; o.textContent = m.label || m.id;
+    sel.appendChild(o);
+  });
+}
+function saveCloudModel() {
+  localStorage.setItem('cloud_model', document.getElementById('model-select').value);
+}
+function showAddModelDialog() {
+  document.getElementById('dialog-input').value = '';
+  document.getElementById('overlay').classList.add('show');
+  closeSettings();
+  setTimeout(function(){ document.getElementById('dialog-input').focus(); }, 60);
+}
+function hideOverlay() { document.getElementById('overlay').classList.remove('show'); }
+function overlayClick(e) { if (e.target.id === 'overlay') hideOverlay(); }
+function confirmAddModel() {
+  var v = document.getElementById('dialog-input').value.trim();
+  if (!v) return;
+  try {
+    var custom = JSON.parse(localStorage.getItem('custom_models')||'[]');
+    if (custom.indexOf(v) === -1) { custom.push(v); localStorage.setItem('custom_models', JSON.stringify(custom)); }
+  } catch(e) {}
+  populateModelSelect();
+  document.getElementById('model-select').value = v;
+  localStorage.setItem('cloud_model', v);
+  hideOverlay();
+}
+
+// ── Token bar ─────────────────────────────────────────────────────────────────
 function resetTokenBar() {
-  tokIn = 0; tokOut = 0; tokCache = 0;
+  tokIn=0; tokOut=0; tokCache=0;
   document.getElementById('tok-in').textContent = '0';
   document.getElementById('tok-out').textContent = '0';
   document.getElementById('tok-cache').textContent = '0';
   document.getElementById('cache-item').style.display = 'none';
 }
-
-function updateTokenBarLocal(inp, out) {
-  document.getElementById('tok-in').textContent = inp;
-  document.getElementById('tok-out').textContent = out;
-  document.getElementById('token-bar').style.display = 'none'; // hidden in local mode
-}
-
 function refreshTokenBar() {
   document.getElementById('tok-in').textContent  = fmt(tokIn);
   document.getElementById('tok-out').textContent = fmt(tokOut);
@@ -965,202 +969,24 @@ function refreshTokenBar() {
   }
   if (mode === 'cloud') document.getElementById('token-bar').style.display = 'flex';
 }
+function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
 
-function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1) + 'k' : String(n); }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
-
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
-
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 function showErr(msg) {
   var t = document.getElementById('err-toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  clearTimeout(showErr._timer);
-  showErr._timer = setTimeout(function(){ t.style.display = 'none'; }, 5000);
-}
-
-// ── Themes ────────────────────────────────────────────────────────────────────
-var THEMES = {
-  dark:   {'--bg':'#0f1117','--surface':'#1a1d27','--surface2':'#22263a','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#2d3348','--user-bg':'#312e81','--asst-bg':'#1e2235','--red':'#ef4444','--green':'#22c55e'},
-  amoled: {'--bg':'#000000','--surface':'#0d0d0d','--surface2':'#141414','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#1c1c1c','--user-bg':'#1a1450','--asst-bg':'#080b14','--red':'#ef4444','--green':'#22c55e'},
-  navy:   {'--bg':'#0a1628','--surface':'#102040','--surface2':'#162a52','--accent':'#3b82f6','--accent2':'#60a5fa','--text':'#e2e8f0','--muted':'#8ba3c7','--border':'#1e3660','--user-bg':'#1e3870','--asst-bg':'#0e1e3a','--red':'#ef4444','--green':'#22c55e'},
-  forest: {'--bg':'#0d1a0e','--surface':'#152418','--surface2':'#1c2e20','--accent':'#22c55e','--accent2':'#4ade80','--text':'#e2e8f0','--muted':'#86a892','--border':'#253c28','--user-bg':'#1a3520','--asst-bg':'#121f14','--red':'#ef4444','--green':'#4ade80'},
-  sunset: {'--bg':'#1a0a0e','--surface':'#2a1018','--surface2':'#381620','--accent':'#f97316','--accent2':'#fb923c','--text':'#f0e6ea','--muted':'#c09aa8','--border':'#4a1f2c','--user-bg':'#4a1a28','--asst-bg':'#200d12','--red':'#fb7185','--green':'#4ade80'},
-  light:  {'--bg':'#f8fafc','--surface':'#ffffff','--surface2':'#f1f5f9','--accent':'#6366f1','--accent2':'#4f46e5','--text':'#1e293b','--muted':'#64748b','--border':'#e2e8f0','--user-bg':'#e0e7ff','--asst-bg':'#f1f5f9','--red':'#dc2626','--green':'#16a34a'}
-};
-
-function setTheme(name) {
-  var t = THEMES[name] || THEMES.dark;
-  var root = document.documentElement;
-  for (var k in t) root.style.setProperty(k, t[k]);
-  localStorage.setItem('theme', name);
-  document.querySelectorAll('.swatch').forEach(function(el) {
-    el.classList.toggle('active', el.id === 'sw-' + name);
-  });
-  document.getElementById('theme-panel').classList.remove('show');
-}
-
-function toggleThemePanel() {
-  var p = document.getElementById('theme-panel');
-  p.classList.toggle('show');
-}
-
-function initTheme() {
-  var saved = localStorage.getItem('theme') || 'dark';
-  setTheme(saved);
-  document.addEventListener('click', function(e) {
-    var panel = document.getElementById('theme-panel');
-    if (!panel.contains(e.target) && e.target.title !== 'Theme') {
-      panel.classList.remove('show');
-    }
-  });
-}
-
-// ── History ───────────────────────────────────────────────────────────────────
-var _convId = null;
-
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem('chat_history') || '[]'); }
-  catch(e) { return []; }
-}
-
-function saveHistory() {
-  if (!messages.length) return;
-  var history = getHistory();
-  var now = Date.now();
-  var title = messages[0].content.slice(0, 60) + (messages[0].content.length > 60 ? '…' : '');
-  if (_convId) {
-    var idx = -1;
-    for (var i = 0; i < history.length; i++) { if (history[i].id === _convId) { idx = i; break; } }
-    if (idx >= 0) {
-      history[idx].messages = messages;
-      history[idx].updated = now;
-      history[idx].model = currentModelName;
-    } else {
-      history.unshift({id:_convId, title:title, created:_convId, updated:now, model:_modelName, messages:messages});
-    }
-  } else {
-    _convId = now;
-    history.unshift({id:_convId, title:title, created:_convId, updated:now, model:_modelName, messages:messages});
-  }
-  if (history.length > 30) history = history.slice(0, 30);
-  localStorage.setItem('chat_history', JSON.stringify(history));
-}
-
-function showHistory() {
-  var list = document.getElementById('hist-list');
-  var history = getHistory();
-  if (!history.length) {
-    list.innerHTML = '<div id="hist-empty">No saved conversations yet.<br>Start chatting to build history.</div>';
-  } else {
-    list.innerHTML = '';
-    history.forEach(function(h) {
-      var d = new Date(h.updated || h.created);
-      var dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) + ' ' +
-                    d.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
-      var btn = document.createElement('button');
-      btn.className = 'hi';
-      btn.innerHTML = '<span class="hi-title">' + esc(h.title) + '</span>' +
-        '<span class="hi-meta">' + esc(dateStr) + (h.model ? ' · ' + esc(h.model) : '') + '</span>' +
-        '<button class="hi-del" title="Delete" onclick="deleteHistory(event,' + h.id + ')">✕</button>';
-      btn.onclick = function(e) {
-        if (e.target.classList.contains('hi-del')) return;
-        loadHistoryItem(h);
-      };
-      list.appendChild(btn);
-    });
-  }
-  document.getElementById('hist-overlay').classList.add('show');
-}
-
-function closeHistory() {
-  document.getElementById('hist-overlay').classList.remove('show');
-}
-
-function histOverlayClick(e) {
-  if (e.target.id === 'hist-overlay') closeHistory();
-}
-
-function deleteHistory(e, id) {
-  e.stopPropagation();
-  var history = getHistory().filter(function(h) { return h.id !== id; });
-  localStorage.setItem('chat_history', JSON.stringify(history));
-  if (_convId === id) _convId = null;
-  showHistory();
-}
-
-function loadHistoryItem(h) {
-  closeHistory();
-  messages = h.messages ? h.messages.slice() : [];
-  _convId = h.id;
-  var el = document.getElementById('messages');
-  el.innerHTML = '';
-  if (!messages.length) {
-    el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div>' +
-      '<p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p></div>';
-    return;
-  }
-  messages.forEach(function(m) {
-    var wrap = document.createElement('div');
-    wrap.className = 'msg ' + m.role;
-    wrap.innerHTML = '<span class="msg-role">' + (m.role === 'user' ? 'You' : 'Assistant') + '</span>' +
-      '<div class="msg-bubble"></div>';
-    wrap.querySelector('.msg-bubble').textContent = m.content;
-    el.appendChild(wrap);
-  });
-  scrollBottom();
-  if (h.model) setLocalModelName(h.model);
-  hideScreens();
-  applyMode('local');
-  document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
-}
-
-// ── Memory warning ─────────────────────────────────────────────────────────────
-var _pendingModelPath = null;
-
-function estimateRam(filename) {
-  var m = filename.toLowerCase().match(/[_\-\s](\d+(?:\.\d+)?)x?b[_\-\s\.q]/);
-  if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b[_\-\.]/);
-  if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b$/);
-  if (!m) return null;
-  var p = parseFloat(m[1]);
-  if (p < 0.5 || p > 300) return null;
-  var gb = Math.ceil(p * 0.6);
-  return {params: p, gb: gb};
-}
-
-function selectModel(path) {
-  if (!AB) return;
-  if (!AB.pathExists(path)) { showErr('Cannot access: ' + path); return; }
-  var name = path.split('/').pop();
-  var ram = estimateRam(name);
-  if (ram && ram.gb >= 3) {
-    _pendingModelPath = path;
-    var text = 'Loading “' + name + '” may need ~' + ram.gb + ' GB of free RAM (' + ram.params + 'B model). ' +
-      (ram.gb >= 8 ? 'Close all other apps first.' : 'Make sure you have enough free memory.');
-    document.getElementById('mem-warn-text').textContent = text;
-    document.getElementById('mem-warn').classList.add('show');
-  } else {
-    AB.loadModel(path);
-  }
-}
-
-function confirmMemWarn() {
-  document.getElementById('mem-warn').classList.remove('show');
-  if (_pendingModelPath && AB) AB.loadModel(_pendingModelPath);
-  _pendingModelPath = null;
-}
-
-function cancelMemWarn() {
-  document.getElementById('mem-warn').classList.remove('show');
-  _pendingModelPath = null;
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(showErr._t);
+  showErr._t = setTimeout(function(){ t.style.display='none'; }, 5000);
 }
 </script>
 </body>
