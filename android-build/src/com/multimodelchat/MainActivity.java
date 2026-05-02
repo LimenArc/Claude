@@ -123,7 +123,12 @@ public class MainActivity extends Activity {
         }
     }
 
-    private File binDir() { return new File(getFilesDir(), "llama"); }
+    private File binDir() {
+        // /data/user/0/ is mounted noexec on Android 10+ — use external files dir instead
+        File ext = getExternalFilesDir("llama");
+        if (ext != null) { ext.mkdirs(); return ext; }
+        return new File(getFilesDir(), "llama");
+    }
     private File serverBinary() { return new File(binDir(), "llama-server"); }
 
     private void js(final String code) {
