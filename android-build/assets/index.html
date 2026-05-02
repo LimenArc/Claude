@@ -5,216 +5,229 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
 <title>Multi-Model Chat</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
-    --accent:#6366f1;--accent2:#818cf8;
-    --text:#e2e8f0;--muted:#94a3b8;--border:#2d3348;
-    --user-bg:#312e81;--asst-bg:#1e2235;--red:#ef4444;--green:#22c55e;
-  }
-  html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    font-size:15px;overflow:hidden}
-  #app{display:flex;flex-direction:column;height:100%;height:100dvh}
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
+  --accent:#6366f1;--accent2:#818cf8;
+  --text:#e2e8f0;--muted:#94a3b8;--border:#2d3348;
+  --user-bg:#312e81;--asst-bg:#1e2235;--red:#ef4444;--green:#22c55e;
+}
+html{height:100vh;height:100dvh}
+body{
+  height:100vh;height:100dvh;
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-size:15px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
 
-  /* ── Header ── */
-  #header{background:var(--surface);border-bottom:2px solid var(--accent);
-    padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-  #header-row1{display:flex;align-items:center;gap:10px}
-  #app-title{font-size:17px;font-weight:800;color:var(--text);flex:1}
-  #header-btns{display:flex;gap:6px;align-items:center}
-  .hbtn{min-width:36px;height:36px;border-radius:10px;border:none;
-    background:var(--surface2);color:var(--text);cursor:pointer;
-    font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .hbtn:active{opacity:.7}
-  #header-row2{display:flex;align-items:center;gap:8px}
-  #model-name-label{font-size:12px;color:var(--accent2);flex:1;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
-  #change-model-btn{padding:4px 12px;border-radius:8px;
-    border:1px solid var(--accent);background:transparent;
-    color:var(--accent2);cursor:pointer;font-size:12px;white-space:nowrap;flex-shrink:0}
+/* ── Views — each fills full body height ────────────────────────────────── */
+.view{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.view.active{display:flex}
 
-  /* ── Messages ── */
-  #messages{flex:1;min-height:0;overflow-y:auto;padding:12px 14px;
-    display:flex;flex-direction:column;gap:10px}
-  #messages::-webkit-scrollbar{width:4px}
-  #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-  .msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
-  .msg.user{align-self:flex-end;align-items:flex-end}
-  .msg.assistant{align-self:flex-start;align-items:flex-start}
-  .msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 4px}
-  .msg-bubble{padding:9px 13px;border-radius:12px;line-height:1.55;
-    white-space:pre-wrap;word-break:break-word;font-size:14px}
-  .msg.user .msg-bubble{background:var(--user-bg);color:#c7d2fe;border-bottom-right-radius:4px}
-  .msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px}
-  .msg-bubble.streaming::after{content:'▌';animation:blink .7s steps(1) infinite;color:var(--accent2)}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* ── Shared header ──────────────────────────────────────────────────────── */
+.hdr{
+  background:var(--surface);border-bottom:2px solid var(--accent);
+  padding:10px 14px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:6px;
+}
+.hdr-row{display:flex;align-items:center;gap:8px;min-width:0}
+.hdr-title{font-size:17px;font-weight:800;color:var(--text);flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hdr-sub{font-size:12px;color:var(--accent2);flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hbtn{
+  min-width:36px;width:36px;height:36px;border-radius:10px;border:none;
+  background:var(--surface2);color:var(--text);cursor:pointer;
+  font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.hbtn:active{opacity:.7}
+.chg-btn{
+  padding:4px 10px;border-radius:8px;border:1px solid var(--accent);
+  background:transparent;color:var(--accent2);cursor:pointer;
+  font-size:12px;white-space:nowrap;flex-shrink:0;
+}
 
-  /* ── Token bar ── */
-  #token-bar{padding:4px 14px;background:var(--surface);border-top:1px solid var(--border);
-    font-size:11px;color:var(--muted);display:none;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .tok-item{display:flex;gap:4px;align-items:center}
-  .tok-val{color:var(--accent2);font-weight:600}
-  .tok-cache{color:var(--green);font-weight:600}
+/* ── Picker view ────────────────────────────────────────────────────────── */
+#picker-body{flex:1;min-height:0;overflow-y:auto;padding:14px}
+#picker-body::-webkit-scrollbar{width:3px}
+#picker-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.folder-row{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.folder-inp{
+  flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:9px 10px;color:var(--text);font-size:12px;
+  font-family:monospace;outline:none;
+}
+.folder-inp:focus{border-color:var(--accent)}
+.fbtn{
+  padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--accent2);cursor:pointer;
+  font-size:13px;white-space:nowrap;flex-shrink:0;
+}
+.fbtn:active{background:var(--border)}
+#model-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.model-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:13px 16px;cursor:pointer;text-align:left;
+  font-size:14px;color:var(--text);width:100%;
+}
+.model-item:active{border-color:var(--accent);background:var(--surface2)}
+.model-item small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.sec-btn{
+  padding:11px 20px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:13px;
+  width:100%;text-align:center;display:block;margin-bottom:8px;
+}
+.sec-btn:active{background:var(--surface2)}
 
-  /* ── Input ── */
-  #input-row{background:var(--surface);border-top:1px solid var(--border);
-    padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));
-    display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
-  #user-input{flex:1;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:10px;padding:9px 12px;
-    font-size:14px;font-family:inherit;resize:none;min-height:40px;
-    max-height:120px;line-height:1.45;outline:none;transition:border .15s}
-  #user-input:focus{border-color:var(--accent)}
-  #user-input::placeholder{color:var(--muted)}
-  #send-btn{padding:9px 18px;border-radius:10px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;
-    font-weight:600;white-space:nowrap;flex-shrink:0}
-  #send-btn:disabled{opacity:.5}
+/* ── Loading view ───────────────────────────────────────────────────────── */
+#v-loading{align-items:center;justify-content:center;gap:16px;padding:32px 24px;text-align:center}
+.ld-icon{font-size:40px;opacity:.7}
+#loading-title{font-size:20px;font-weight:700}
+#loading-msg{font-size:13px;color:var(--muted);max-width:300px;line-height:1.5;white-space:pre-wrap}
+#back-btn{
+  display:none;padding:12px 28px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:14px;
+  max-width:300px;width:100%;margin-top:8px;
+}
 
-  /* ── Empty state ── */
-  #empty-state{display:flex;flex-direction:column;align-items:center;
-    justify-content:center;flex:1;gap:10px;color:var(--muted);padding:20px;text-align:center}
-  #empty-state .es-icon{font-size:36px;opacity:.35}
-  #empty-state p{font-size:13px;max-width:280px}
+/* ── Chat view ──────────────────────────────────────────────────────────── */
+#messages{
+  flex:1;min-height:0;overflow-y:auto;padding:12px 14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+#messages::-webkit-scrollbar{width:4px}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.assistant{align-self:flex-start;align-items:flex-start}
+.msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 4px}
+.msg-bubble{
+  padding:9px 13px;border-radius:12px;line-height:1.55;
+  white-space:pre-wrap;word-break:break-word;font-size:14px;
+}
+.msg.user .msg-bubble{background:var(--user-bg);color:#c7d2fe;border-bottom-right-radius:4px}
+.msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px}
+.msg-bubble.streaming::after{content:'▌';animation:blink .7s steps(1) infinite;color:var(--accent2)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+#empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;gap:10px;color:var(--muted);padding:20px;text-align:center;
+}
+#empty-state .es-icon{font-size:36px;opacity:.35}
+#empty-state p{font-size:13px;max-width:280px}
 
-  /* ── API Key screen ── */
-  #apikey-screen{display:none;flex-direction:column;gap:14px;
-    padding:28px 20px;align-items:center;justify-content:center;flex:1}
-  #apikey-screen h2{font-size:18px;font-weight:600}
-  #apikey-screen p{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
-  #apikey-input{width:100%;max-width:380px;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:monospace}
-  #apikey-save-btn{padding:10px 28px;border-radius:8px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+/* ── API Key panel (inside chat view) ───────────────────────────────────── */
+#apikey-panel{
+  flex:1;min-height:0;display:none;flex-direction:column;gap:14px;
+  padding:28px 20px;align-items:center;justify-content:center;overflow-y:auto;
+}
+#apikey-panel h2{font-size:18px;font-weight:600}
+#apikey-panel p{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
+#apikey-input{
+  width:100%;max-width:380px;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+  font-size:13px;font-family:monospace;outline:none;
+}
+#apikey-input:focus{border-color:var(--accent)}
+#apikey-save-btn{
+  padding:10px 28px;border-radius:8px;border:none;
+  background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600;
+}
 
-  /* ── Full-screen overlay screens ── */
-  .screen{display:none;position:fixed;inset:0;z-index:400;background:var(--bg);
-    flex-direction:column;align-items:center;justify-content:flex-start;
-    padding:0;overflow-y:auto}
-  .screen.active{display:flex}
+/* ── Token bar ──────────────────────────────────────────────────────────── */
+#token-bar{
+  padding:4px 14px;background:var(--surface);border-top:1px solid var(--border);
+  font-size:11px;color:var(--muted);display:none;gap:10px;flex-wrap:wrap;flex-shrink:0;
+}
+.tok-val{color:var(--accent2);font-weight:600}
+.tok-cache{color:var(--green);font-weight:600}
 
-  /* Picker screen */
-  #screen-picker{padding-top:0}
-  #picker-header{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);
-    padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-  #picker-title{font-size:17px;font-weight:800;color:var(--text);flex:1}
-  .picker-body{width:100%;padding:16px 14px;display:flex;flex-direction:column;gap:12px}
-  .folder-row{display:flex;gap:6px;align-items:center}
-  .folder-input{flex:1;background:var(--surface2);border:1px solid var(--border);
-    border-radius:8px;padding:9px 10px;color:var(--text);font-size:12px;
-    font-family:monospace;min-width:0;outline:none}
-  .folder-input:focus{border-color:var(--accent)}
-  .folder-btn{padding:9px 12px;border-radius:8px;border:1px solid var(--border);
-    background:var(--surface2);color:var(--accent2);cursor:pointer;font-size:13px;
-    white-space:nowrap;flex-shrink:0}
-  .model-list{display:flex;flex-direction:column;gap:6px}
-  .model-item{background:var(--surface);border:1px solid var(--border);
-    border-radius:10px;padding:13px 16px;cursor:pointer;text-align:left;
-    font-size:14px;color:var(--text);width:100%}
-  .model-item:active{border-color:var(--accent);background:var(--surface2)}
-  .model-item small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
-  .sec-btn{padding:11px 20px;border-radius:10px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:13px;width:100%;text-align:center}
-  .sec-btn:active{background:var(--surface2)}
+/* ── Input row ──────────────────────────────────────────────────────────── */
+#input-row{
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));
+  display:flex;gap:8px;align-items:flex-end;flex-shrink:0;
+}
+#user-input{
+  flex:1;min-width:0;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:10px;padding:9px 12px;
+  font-size:14px;font-family:inherit;resize:none;min-height:40px;max-height:120px;
+  line-height:1.45;outline:none;transition:border .15s;
+}
+#user-input:focus{border-color:var(--accent)}
+#user-input::placeholder{color:var(--muted)}
+#send-btn{
+  padding:9px 18px;border-radius:10px;border:none;
+  background:var(--accent);color:#fff;cursor:pointer;font-size:14px;
+  font-weight:600;white-space:nowrap;flex-shrink:0;
+}
+#send-btn:disabled{opacity:.5}
 
-  /* Loading screen */
-  #screen-loading{align-items:center;justify-content:center;gap:18px;padding:32px 24px;text-align:center}
-  #screen-loading .screen-icon{font-size:40px;opacity:.7}
-  #screen-loading h2{font-size:20px;font-weight:700}
-  #screen-loading p{font-size:13px;color:var(--muted);max-width:300px;line-height:1.5;white-space:pre-wrap}
-  .screen-btn-back{padding:12px 28px;border-radius:10px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:14px;width:100%;max-width:300px}
+/* ── Settings sheet ─────────────────────────────────────────────────────── */
+#settings-overlay{
+  display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);
+}
+#settings-overlay.show{display:block}
+#settings-sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:601;
+  background:var(--surface);border-radius:18px 18px 0 0;
+  border-top:1px solid var(--border);
+  max-height:90vh;max-height:90dvh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .3s ease;
+}
+#settings-overlay.show #settings-sheet{transform:translateY(0)}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.sheet-title{font-size:16px;font-weight:700;color:var(--text);padding:14px 18px 0}
+.sheet-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+.sheet-section:last-child{border-bottom:none;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+.sheet-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600}
+.theme-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.swatch{aspect-ratio:1;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .15s,border-color .15s}
+.swatch.active{border-color:var(--text)}
+.swatch:active{transform:scale(.9)}
+.swatch-label{font-size:9px;color:var(--muted);text-align:center;margin-top:3px}
+.mode-toggle{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
+.mtog{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-weight:500;transition:all .2s}
+.mtog.active{background:var(--accent);color:#fff}
+#cloud-config-section{display:none;flex-direction:column;gap:8px}
+.sh-select{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px}
+.sh-row{display:flex;gap:8px}
+.sh-btn{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
+#sysprompt{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;resize:none;min-height:60px;max-height:120px;font-family:inherit;line-height:1.4;outline:none}
+#sysprompt:focus{border-color:var(--accent)}
+.hi{padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;background:none;width:100%;text-align:left;border-left:none;border-right:none;border-top:none}
+.hi:last-child{border-bottom:none}
+.hi-body{flex:1;min-width:0}
+.hi-title{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+.hi-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:6px;border-radius:6px;flex-shrink:0}
+.hi-del:active{color:var(--red)}
+#hist-empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center}
 
-  /* ── Settings sheet ── */
-  #settings-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6)}
-  #settings-overlay.show{display:block}
-  #settings-sheet{position:fixed;left:0;right:0;bottom:0;z-index:601;
-    background:var(--surface);border-radius:18px 18px 0 0;
-    border-top:1px solid var(--border);
-    max-height:90dvh;overflow-y:auto;
-    transform:translateY(100%);transition:transform .3s ease}
-  #settings-overlay.show #settings-sheet{transform:translateY(0)}
-  .sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;
-    margin:12px auto 0}
-  .sheet-title{font-size:16px;font-weight:700;color:var(--text);padding:14px 18px 0}
-  .sheet-section{padding:14px 18px;border-bottom:1px solid var(--border)}
-  .sheet-section:last-child{border-bottom:none;padding-bottom:max(18px,env(safe-area-inset-bottom))}
-  .sheet-label{font-size:11px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.6px;margin-bottom:10px;font-weight:600}
-  /* Themes in sheet */
-  .theme-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-  .swatch{aspect-ratio:1;border-radius:50%;cursor:pointer;
-    border:3px solid transparent;transition:transform .15s,border-color .15s}
-  .swatch.active{border-color:var(--text)}
-  .swatch:active{transform:scale(.9)}
-  .swatch-label{font-size:9px;color:var(--muted);text-align:center;margin-top:3px}
-  /* Mode toggle */
-  .mode-toggle{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
-  .mtog{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;
-    color:var(--muted);cursor:pointer;font-size:13px;font-weight:500;transition:all .2s}
-  .mtog.active{background:var(--accent);color:#fff}
-  /* Cloud config */
-  #cloud-config{display:none;flex-direction:column;gap:8px}
-  .sh-select{width:100%;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px}
-  .sh-row{display:flex;gap:8px}
-  .sh-btn{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
-  /* System prompt */
-  #sysprompt{width:100%;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;padding:9px 10px;
-    font-size:13px;resize:none;min-height:60px;max-height:120px;
-    font-family:inherit;line-height:1.4;outline:none}
-  #sysprompt:focus{border-color:var(--accent)}
-  /* History in sheet */
-  .hi{padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer;
-    display:flex;align-items:center;gap:8px;background:none;border-left:none;border-right:none;
-    border-top:none;width:100%;text-align:left}
-  .hi:last-child{border-bottom:none}
-  .hi-body{flex:1;min-width:0}
-  .hi-title{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-  .hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
-  .hi-del{background:none;border:none;color:var(--muted);cursor:pointer;
-    font-size:16px;padding:6px;border-radius:6px;flex-shrink:0}
-  .hi-del:active{color:var(--red)}
-  #hist-empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center}
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:700;align-items:center;justify-content:center;padding:20px}
+#overlay.show{display:flex}
+#dialog{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
+#dialog h3{color:var(--text);font-size:16px;font-weight:600}
+#dialog p{color:var(--muted);font-size:12px}
+#dialog-input{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;width:100%;font-family:monospace;outline:none}
+#dialog-input:focus{border-color:var(--accent)}
+#dialog-btns{display:flex;gap:8px;justify-content:flex-end}
+.dlg-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
+.dlg-ok{padding:7px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600}
 
-  /* ── Dialogs ── */
-  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);
-    z-index:700;align-items:center;justify-content:center;padding:20px}
-  #overlay.show{display:flex}
-  #dialog{background:var(--surface);border:1px solid var(--border);
-    border-radius:12px;padding:22px;width:100%;max-width:340px;
-    display:flex;flex-direction:column;gap:14px}
-  #dialog h3{color:var(--text);font-size:16px;font-weight:600}
-  #dialog p{color:var(--muted);font-size:12px}
-  #dialog-input{background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;
-    padding:9px 12px;font-size:13px;width:100%;font-family:monospace;outline:none}
-  #dialog-input:focus{border-color:var(--accent)}
-  #dialog-btns{display:flex;gap:8px;justify-content:flex-end}
-  .dlg-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
-  .dlg-ok{padding:7px 16px;border-radius:8px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600}
+/* ── Memory warning ─────────────────────────────────────────────────────── */
+#mem-warn{position:fixed;top:0;left:0;right:0;z-index:800;background:#92400e;color:#fef3c7;padding:12px 16px;display:none;flex-direction:column;align-items:center;gap:10px;text-align:center}
+#mem-warn.show{display:flex}
+#mem-warn p{font-size:13px;margin:0;line-height:1.4}
+.mw-btns{display:flex;gap:10px}
+.mw-ok{padding:7px 20px;border-radius:8px;border:none;background:#b45309;color:#fff;cursor:pointer;font-size:13px;font-weight:600}
+.mw-cancel{padding:7px 20px;border-radius:8px;border:1px solid #b45309;background:transparent;color:#fef3c7;cursor:pointer;font-size:13px}
 
-  /* ── Memory warning ── */
-  #mem-warn{position:fixed;top:0;left:0;right:0;z-index:800;
-    background:#92400e;color:#fef3c7;padding:12px 16px;
-    display:none;flex-direction:column;align-items:center;gap:10px;text-align:center}
-  #mem-warn.show{display:flex}
-  #mem-warn p{font-size:13px;margin:0;line-height:1.4}
-  .mw-btns{display:flex;gap:10px}
-  .mw-ok{padding:7px 20px;border-radius:8px;border:none;
-    background:#b45309;color:#fff;cursor:pointer;font-size:13px;font-weight:600}
-  .mw-cancel{padding:7px 20px;border-radius:8px;border:1px solid #b45309;
-    background:transparent;color:#fef3c7;cursor:pointer;font-size:13px}
-
-  /* ── Toast ── */
-  #err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-    background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;
-    font-size:12px;display:none;z-index:900;max-width:90%;text-align:center}
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+#err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;font-size:12px;display:none;z-index:900;max-width:90%;text-align:center}
 </style>
 </head>
 <body>
@@ -228,51 +241,57 @@
   </div>
 </div>
 
-<!-- ── Model picker screen ── -->
-<div id="screen-picker" class="screen">
-  <div id="picker-header">
-    <span id="picker-title">Choose a Model</span>
-    <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
+<!-- ── View: Picker ──────────────────────────────────────────────────────── -->
+<div id="v-picker" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <span class="hdr-title">Multi-Model Chat</span>
+      <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
+    </div>
+    <div class="hdr-row">
+      <span class="hdr-sub">Choose a model to get started</span>
+    </div>
   </div>
-  <div class="picker-body">
+  <div id="picker-body">
     <div class="folder-row">
-      <input class="folder-input" id="folder-input" type="text"
+      <input class="folder-inp" id="folder-input" type="text"
         placeholder="/storage/emulated/0/Download"
         spellcheck="false" autocapitalize="none"/>
-      <button class="folder-btn" onclick="browseFolders()">📁</button>
-      <button class="folder-btn" onclick="rescanFolder()">Scan</button>
+      <button class="fbtn" onclick="browseFolders()">📁</button>
+      <button class="fbtn" onclick="rescanFolder()">Scan</button>
     </div>
-    <div id="model-list" class="model-list"></div>
+    <div id="model-list"></div>
     <button class="sec-btn" onclick="rescanFolder()">↻ Refresh</button>
     <button class="sec-btn" onclick="searchEntirePhone()">🔍 Search entire phone</button>
   </div>
 </div>
 
-<!-- ── Loading screen ── -->
-<div id="screen-loading" class="screen">
-  <div class="screen-icon">⏳</div>
+<!-- ── View: Loading ─────────────────────────────────────────────────────── -->
+<div id="v-loading" class="view">
+  <span class="ld-icon">⏳</span>
   <h2 id="loading-title">Loading Model…</h2>
   <p id="loading-msg">This may take 30–60 seconds depending on model size.</p>
+  <button id="back-btn" onclick="onShowModelPicker()">← Back to model list</button>
 </div>
 
-<!-- ── Main app ── -->
-<div id="app">
-
-  <div id="header">
-    <div id="header-row1">
-      <span id="app-title">Multi-Model Chat</span>
-      <div id="header-btns">
+<!-- ── View: Chat ─────────────────────────────────────────────────────────── -->
+<div id="v-chat" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <span class="hdr-title">Multi-Model Chat</span>
+      <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="hbtn" onclick="newChat()" title="New chat">✏️</button>
         <button class="hbtn" onclick="openSettings()" title="Settings">⚙️</button>
       </div>
     </div>
-    <div id="header-row2" style="display:none">
-      <span id="model-name-label"></span>
-      <button id="change-model-btn" onclick="doChangeModel()">Change Model</button>
+    <div class="hdr-row" id="model-row" style="display:none">
+      <span class="hdr-sub" id="model-name-label"></span>
+      <button class="chg-btn" id="change-model-btn" onclick="doChangeModel()" style="display:none">Change</button>
     </div>
   </div>
 
-  <div id="apikey-screen">
+  <!-- API Key entry -->
+  <div id="apikey-panel">
     <h2>Anthropic API Key</h2>
     <p>Enter your API key to use Claude models. Stored locally on your device only.</p>
     <input id="apikey-input" type="password" placeholder="sk-ant-…" autocomplete="off"
@@ -280,6 +299,7 @@
     <button id="apikey-save-btn" onclick="saveApiKey()">Save Key &amp; Continue</button>
   </div>
 
+  <!-- Messages -->
   <div id="messages">
     <div id="empty-state">
       <div class="es-icon">💬</div>
@@ -288,28 +308,24 @@
   </div>
 
   <div id="token-bar">
-    <span class="tok-item">In: <span class="tok-val" id="tok-in">0</span></span>
-    <span class="tok-item">Out: <span class="tok-val" id="tok-out">0</span></span>
-    <span class="tok-item" id="cache-item" style="display:none">
-      Cache: <span class="tok-cache" id="tok-cache">0</span>
-    </span>
+    <span>In: <span class="tok-val" id="tok-in">0</span></span>
+    <span>Out: <span class="tok-val" id="tok-out">0</span></span>
+    <span id="cache-item" style="display:none">Cache: <span class="tok-cache" id="tok-cache">0</span></span>
   </div>
 
   <div id="input-row">
-    <textarea id="user-input" rows="1" placeholder="Type a message… (Enter to send)"
+    <textarea id="user-input" rows="1" placeholder="Type a message…"
       oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
     <button id="send-btn" onclick="sendMessage()">Send</button>
   </div>
-
 </div>
 
-<!-- ── Settings sheet ── -->
+<!-- ── Settings sheet ────────────────────────────────────────────────────── -->
 <div id="settings-overlay" onclick="settingsOverlayClick(event)">
   <div id="settings-sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Settings</div>
 
-    <!-- Theme -->
     <div class="sheet-section">
       <div class="sheet-label">Theme</div>
       <div class="theme-grid">
@@ -340,7 +356,6 @@
       </div>
     </div>
 
-    <!-- Mode -->
     <div class="sheet-section">
       <div class="sheet-label">AI Mode</div>
       <div class="mode-toggle">
@@ -349,8 +364,7 @@
       </div>
     </div>
 
-    <!-- Cloud config (shown when cloud mode) -->
-    <div class="sheet-section" id="cloud-config-section" style="display:none">
+    <div class="sheet-section" id="cloud-config-section">
       <div class="sheet-label">Cloud Model &amp; API Key</div>
       <select class="sh-select" id="model-select" onchange="saveCloudModel()"></select>
       <div class="sh-row" style="margin-top:8px">
@@ -359,19 +373,16 @@
       </div>
     </div>
 
-    <!-- System prompt -->
     <div class="sheet-section">
       <div class="sheet-label">System Prompt</div>
       <textarea id="sysprompt" rows="3" placeholder="Give the AI a persona or instructions…"
         oninput="autoResize(this)"></textarea>
     </div>
 
-    <!-- History -->
     <div class="sheet-section">
       <div class="sheet-label">Conversation History</div>
       <div id="hist-list"></div>
     </div>
-
   </div>
 </div>
 
@@ -415,7 +426,7 @@ var _modelName = '';
 var _convId = null;
 var _pendingModelPath = null;
 
-// ── Themes ───────────────────────────────────────────────────────────────────
+// ── Themes ──────────────────────────────────────────────────────────────────
 var THEMES = {
   dark:   {'--bg':'#0f1117','--surface':'#1a1d27','--surface2':'#22263a','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#2d3348','--user-bg':'#312e81','--asst-bg':'#1e2235','--red':'#ef4444','--green':'#22c55e'},
   amoled: {'--bg':'#000000','--surface':'#0d0d0d','--surface2':'#141414','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#1c1c1c','--user-bg':'#1a1450','--asst-bg':'#080b14','--red':'#ef4444','--green':'#22c55e'},
@@ -435,7 +446,7 @@ function setTheme(name) {
   });
 }
 
-// ── Boot ─────────────────────────────────────────────────────────────────────
+// ── Boot ────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
   setTheme(localStorage.getItem('theme') || 'dark');
   populateModelSelect();
@@ -444,9 +455,14 @@ window.addEventListener('DOMContentLoaded', function() {
     var sel = document.getElementById('model-select');
     if (sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
   }
+  var sp = localStorage.getItem('sysprompt');
+  if (sp) document.getElementById('sysprompt').value = sp;
+  document.getElementById('sysprompt').addEventListener('input', function() {
+    localStorage.setItem('sysprompt', this.value);
+  });
 
   if (!AB) {
-    hideScreens();
+    showView('v-chat');
     setMode('local');
     setLocalModelName('Browser mode');
     return;
@@ -454,32 +470,26 @@ window.addEventListener('DOMContentLoaded', function() {
 
   var status = AB.getStatus();
   if (status === 'needs_setup' || status === 'needs_model') {
-    showScreen('screen-picker');
+    showView('v-picker');
     loadFolderInput();
     rescanFolder();
   } else if (status.indexOf('ready:') === 0) {
-    hideScreens();
+    showView('v-chat');
     setLocalModelName(status.slice(6));
     setMode('local');
   }
 });
 
-// ── Screens ──────────────────────────────────────────────────────────────────
-var SCREENS = ['screen-picker','screen-loading'];
-function showScreen(id) {
-  SCREENS.forEach(function(s) {
-    var el = document.getElementById(s);
-    if (el) el.classList.toggle('active', s === id);
-  });
-}
-function hideScreens() {
-  SCREENS.forEach(function(s) {
-    var el = document.getElementById(s);
-    if (el) el.classList.remove('active');
+// ── Views ───────────────────────────────────────────────────────────────────
+var VIEWS = ['v-picker', 'v-loading', 'v-chat'];
+function showView(id) {
+  VIEWS.forEach(function(v) {
+    var el = document.getElementById(v);
+    if (el) el.classList.toggle('active', v === id);
   });
 }
 
-// ── Settings sheet ────────────────────────────────────────────────────────────
+// ── Settings ─────────────────────────────────────────────────────────────────
 function openSettings() {
   renderHistoryList();
   document.getElementById('settings-overlay').classList.add('show');
@@ -491,66 +501,60 @@ function settingsOverlayClick(e) {
   if (e.target.id === 'settings-overlay') closeSettings();
 }
 
-// ── Mode ──────────────────────────────────────────────────────────────────────
+// ── Mode ─────────────────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
   document.getElementById('mtog-local').classList.toggle('active', m === 'local');
   document.getElementById('mtog-cloud').classList.toggle('active', m === 'cloud');
-  document.getElementById('cloud-config-section').style.display = m === 'cloud' ? 'block' : 'none';
+  document.getElementById('cloud-config-section').style.display = m === 'cloud' ? 'flex' : 'none';
   document.getElementById('token-bar').style.display = m === 'cloud' ? 'flex' : 'none';
-
-  var apikeyScr = document.getElementById('apikey-screen');
-  var messagesEl = document.getElementById('messages');
-  var inputRow = document.getElementById('input-row');
-
   if (m === 'local') {
-    apikeyScr.style.display  = 'none';
-    messagesEl.style.display = 'flex';
-    inputRow.style.display   = 'flex';
+    showChatContent();
   } else {
     var key = localStorage.getItem('anthropic_key') || '';
-    if (!key) {
-      showApikeyScreen();
-    } else {
-      apikeyScr.style.display  = 'none';
-      messagesEl.style.display = 'flex';
-      inputRow.style.display   = 'flex';
-    }
+    if (!key) showApikeyScreen();
+    else showChatContent();
   }
 }
 
+function showChatContent() {
+  document.getElementById('apikey-panel').style.display = 'none';
+  document.getElementById('messages').style.display = 'flex';
+  document.getElementById('input-row').style.display = 'flex';
+}
+
 function showApikeyScreen() {
-  document.getElementById('apikey-screen').style.display  = 'flex';
-  document.getElementById('messages').style.display       = 'none';
-  document.getElementById('input-row').style.display      = 'none';
+  document.getElementById('apikey-panel').style.display = 'flex';
+  document.getElementById('messages').style.display = 'none';
+  document.getElementById('input-row').style.display = 'none';
   closeSettings();
 }
+
 function saveApiKey() {
   var v = document.getElementById('apikey-input').value.trim();
   if (!v.startsWith('sk-')) { showErr('Key must start with sk-ant-…'); return; }
   localStorage.setItem('anthropic_key', v);
-  document.getElementById('apikey-screen').style.display  = 'none';
-  document.getElementById('messages').style.display       = 'flex';
-  document.getElementById('input-row').style.display      = 'flex';
+  showChatContent();
 }
 
-// ── Model name ────────────────────────────────────────────────────────────────
+// ── Model name ───────────────────────────────────────────────────────────────
 function setLocalModelName(name) {
   _modelName = name || '';
-  var row2 = document.getElementById('header-row2');
+  var row = document.getElementById('model-row');
   if (name) {
     document.getElementById('model-name-label').textContent = '🤖 ' + name;
-    row2.style.display = 'flex';
+    row.style.display = 'flex';
     document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
   } else {
-    row2.style.display = 'none';
+    row.style.display = 'none';
   }
 }
+
 function doChangeModel() {
   if (AB) AB.changeModel();
 }
 
-// ── Model picker ──────────────────────────────────────────────────────────────
+// ── Model picker ─────────────────────────────────────────────────────────────
 function loadFolderInput() {
   var inp = document.getElementById('folder-input');
   var saved = localStorage.getItem('models_folder');
@@ -609,8 +613,8 @@ function onFolderSelected(path) { document.getElementById('folder-input').value 
 function onFolderSelectFailed() { showErr('Could not read folder path — try typing it manually'); }
 function onStorageGranted() { rescanFolder(); }
 function onAppResume() {
-  var s = document.querySelector('.screen.active');
-  if (s && s.id === 'screen-picker') rescanFolder();
+  var picker = document.getElementById('v-picker');
+  if (picker && picker.classList.contains('active')) rescanFolder();
 }
 
 function searchEntirePhone() {
@@ -634,7 +638,7 @@ function searchEntirePhone() {
   });
 }
 
-// ── Memory warning ────────────────────────────────────────────────────────────
+// ── Memory warning ───────────────────────────────────────────────────────────
 function estimateRam(filename) {
   var m = filename.toLowerCase().match(/[_\-\s\.](\d+(?:\.\d+)?)[x]?b[_\-\s\.q]/);
   if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b[_\-\.q]/);
@@ -669,18 +673,16 @@ function cancelMemWarn() {
   _pendingModelPath = null;
 }
 
-// ── Model loading callbacks ───────────────────────────────────────────────────
+// ── Model loading callbacks ──────────────────────────────────────────────────
 function onModelLoading(name) {
-  var s = document.getElementById('screen-loading');
-  var back = s.querySelector('.screen-btn-back');
-  if (back) back.remove();
-  s.querySelector('h2').style.color = '';
+  document.getElementById('loading-title').style.color = '';
   document.getElementById('loading-title').textContent = 'Loading Model…';
   document.getElementById('loading-msg').textContent = 'Loading ' + name + '\nThis may take 30–60 seconds.';
-  showScreen('screen-loading');
+  document.getElementById('back-btn').style.display = 'none';
+  showView('v-loading');
 }
 function onModelReady(name) {
-  hideScreens();
+  showView('v-chat');
   setLocalModelName(name);
   setMode('local');
 }
@@ -689,22 +691,15 @@ function onModelError(msg) {
   document.getElementById('loading-title').style.color = 'var(--red)';
   document.getElementById('loading-title').textContent = 'Failed to Load';
   document.getElementById('loading-msg').textContent = msg + (log ? '\n\n' + log : '');
-  var s = document.getElementById('screen-loading');
-  if (!s.querySelector('.screen-btn-back')) {
-    var btn = document.createElement('button');
-    btn.className = 'screen-btn-back';
-    btn.textContent = '← Back to model list';
-    btn.onclick = onShowModelPicker;
-    s.appendChild(btn);
-  }
+  document.getElementById('back-btn').style.display = 'block';
 }
 function onShowModelPicker() {
-  showScreen('screen-picker');
+  showView('v-picker');
   loadFolderInput();
   rescanFolder();
 }
 
-// ── History ───────────────────────────────────────────────────────────────────
+// ── History ──────────────────────────────────────────────────────────────────
 function getHistory() {
   try { return JSON.parse(localStorage.getItem('chat_history') || '[]'); }
   catch(e) { return []; }
@@ -766,18 +761,18 @@ function loadHistoryItem(h) {
   el.innerHTML = '';
   if (!messages.length) {
     el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div><p>Start a conversation.</p></div>';
-    return;
+  } else {
+    messages.forEach(function(m) {
+      var wrap = document.createElement('div');
+      wrap.className = 'msg ' + m.role;
+      wrap.innerHTML = '<span class="msg-role">' + (m.role==='user'?'You':'Assistant') + '</span><div class="msg-bubble"></div>';
+      wrap.querySelector('.msg-bubble').textContent = m.content;
+      el.appendChild(wrap);
+    });
+    scrollBottom();
   }
-  messages.forEach(function(m) {
-    var wrap = document.createElement('div');
-    wrap.className = 'msg ' + m.role;
-    wrap.innerHTML = '<span class="msg-role">' + (m.role==='user'?'You':'Assistant') + '</span><div class="msg-bubble"></div>';
-    wrap.querySelector('.msg-bubble').textContent = m.content;
-    el.appendChild(wrap);
-  });
-  scrollBottom();
   if (h.model) setLocalModelName(h.model);
-  hideScreens();
+  showView('v-chat');
   setMode('local');
 }
 function deleteHistoryItem(id) {
@@ -787,7 +782,7 @@ function deleteHistoryItem(id) {
   renderHistoryList();
 }
 
-// ── Chat ──────────────────────────────────────────────────────────────────────
+// ── Chat ─────────────────────────────────────────────────────────────────────
 function newChat() {
   if (streaming && abortCtrl) abortCtrl.abort();
   _convId = null;
@@ -842,7 +837,7 @@ async function sendMessage() {
   saveHistory();
 }
 
-// ── Local streaming ───────────────────────────────────────────────────────────
+// ── Local streaming ──────────────────────────────────────────────────────────
 async function streamLocal(bubble) {
   abortCtrl = new AbortController();
   var sys = document.getElementById('sysprompt').value.trim();
@@ -873,7 +868,7 @@ async function streamLocal(bubble) {
   }
 }
 
-// ── Cloud streaming ───────────────────────────────────────────────────────────
+// ── Cloud streaming ──────────────────────────────────────────────────────────
 async function streamCloud(bubble) {
   var key = localStorage.getItem('anthropic_key') || '';
   if (!key) { showApikeyScreen(); throw new Error('No API key'); }
@@ -917,7 +912,7 @@ async function streamCloud(bubble) {
   }
 }
 
-// ── Cloud model selector ──────────────────────────────────────────────────────
+// ── Cloud model selector ─────────────────────────────────────────────────────
 function populateModelSelect() {
   var sel = document.getElementById('model-select');
   sel.innerHTML = '';
@@ -952,7 +947,7 @@ function confirmAddModel() {
   hideOverlay();
 }
 
-// ── Token bar ─────────────────────────────────────────────────────────────────
+// ── Token bar ────────────────────────────────────────────────────────────────
 function resetTokenBar() {
   tokIn=0; tokOut=0; tokCache=0;
   document.getElementById('tok-in').textContent = '0';
@@ -971,7 +966,7 @@ function refreshTokenBar() {
 }
 function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
