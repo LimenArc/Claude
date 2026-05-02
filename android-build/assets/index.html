@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
 <title>Multi-Model Chat</title>
 <style>
 /* ── Reset ──────────────────────────────────────────────────────────────── */
@@ -29,7 +29,9 @@ body{
 /* ── Shared header ──────────────────────────────────────────────────────── */
 .hdr{
   background:var(--surface);border-bottom:2px solid var(--accent);
-  padding:10px 14px;flex-shrink:0;
+  padding:10px 14px;
+  padding-top:max(10px,env(safe-area-inset-top));
+  flex-shrink:0;
   display:flex;flex-direction:column;gap:6px;
 }
 .hdr-row{display:flex;align-items:center;gap:8px;min-width:0}
@@ -37,14 +39,15 @@ body{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .hdr-sub{font-size:12px;color:var(--accent2);flex:1;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-/* Buttons: solid border so they're always visible on any background */
+/* Buttons: accent background so they're always visible on any theme */
 .hbtn{
   min-width:36px;width:36px;height:36px;border-radius:10px;
-  border:1px solid var(--border);
-  background:var(--surface2);color:var(--text);cursor:pointer;
-  font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border:none;
+  background:var(--accent);color:#fff;cursor:pointer;
+  font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
 }
-.hbtn:active{opacity:.6;background:var(--border)}
+.hbtn:active{opacity:.7}
 .chg-btn{
   padding:4px 10px;border-radius:8px;border:1px solid var(--accent);
   background:transparent;color:var(--accent2);cursor:pointer;
@@ -98,7 +101,9 @@ body{
 .pick-hist-meta{font-size:11px;color:var(--muted);display:block;margin-top:2px}
 
 /* ── Loading view ───────────────────────────────────────────────────────── */
-#v-loading{align-items:center;justify-content:center;gap:16px;padding:32px 24px;text-align:center}
+#v-loading{align-items:center;justify-content:center;gap:16px;
+  padding:32px 24px;padding-top:max(32px,calc(env(safe-area-inset-top)+16px));
+  text-align:center}
 .ld-icon{font-size:40px;opacity:.7}
 #loading-title{font-size:20px;font-weight:700}
 #loading-msg{font-size:13px;color:var(--muted);max-width:300px;line-height:1.5;white-space:pre-wrap}
