@@ -16,39 +16,28 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 public class MainActivity extends Activity {
 
-    private static final String RELEASE_URL =
-        "https://github.com/ggml-org/llama.cpp/releases/download/b8953/llama-b8953-bin-android-arm64.tar.gz";
-    private static final int SERVER_PORT = 8080;
-    private static final int REQUEST_FOLDER = 1;
+    private static final int SERVER_PORT  = 8080;
+    private static final int REQUEST_FOLDER  = 1;
     private static final int REQUEST_STORAGE = 2;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WebView webView;
     private Process serverProcess;
-    private java.io.FileDescriptor serverMemFd = null;
     private String currentModelName = "";
-    private String lastServerLog = "";
+    private String lastServerLog    = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,67 +113,14 @@ public class MainActivity extends Activity {
         }
     }
 
-    private File binDir() {
-        // /data/user/0/ is mounted noexec on Android 10+ — use external files dir
-        File ext = getExternalFilesDir("llama");
-        if (ext != null) {
-            ext.mkdirs();
-            migrateFromInternal(ext);
-            return ext;
-        }
-        return new File(getFilesDir(), "llama");
+    // Binaries live in nativeLibraryDir — installed by Android from APK lib/arm64-v8a/,
+    // always executable regardless of Samsung W^X policy.
+    private File nativeLibDir() {
+        return new File(getApplicationInfo().nativeLibraryDir);
     }
 
-    private void migrateFromInternal(File dest) {
-        File oldDir = new File(getFilesDir(), "llama");
-        if (!oldDir.isDirectory()) return;
-        File[] files = oldDir.listFiles();
-        if (files == null) return;
-        for (File f : files) {
-            File target = new File(dest, f.getName());
-            if (!target.exists()) {
-                try { copyFile(f, target); } catch (IOException ignored) {}
-            }
-            f.delete();
-        }
-        oldDir.delete();
-    }
-
-    private void copyFile(File src, File dst) throws IOException {
-        FileInputStream in = new FileInputStream(src);
-        FileOutputStream out = new FileOutputStream(dst);
-        try {
-            byte[] buf = new byte[65536]; int n;
-            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
-        } finally { in.close(); out.close(); }
-    }
-    private File serverBinary() { return new File(binDir(), "llama-server"); }
-
-    // memfd_create: load binary into anonymous memory (bypasses noexec on all writable paths)
-    private String prepareExec(File binary) {
-        try {
-            Class<?> os = Class.forName("android.system.Os");
-            java.lang.reflect.Method create = os.getMethod("memfdCreate", String.class, int.class);
-            java.io.FileDescriptor fd = (java.io.FileDescriptor) create.invoke(null, "llama", 0);
-            serverMemFd = fd;
-            java.lang.reflect.Field fdField = java.io.FileDescriptor.class.getDeclaredField("descriptor");
-            fdField.setAccessible(true);
-            int fdNum = (Integer) fdField.get(fd);
-            java.lang.reflect.Method write = os.getMethod("write", java.io.FileDescriptor.class, byte[].class, int.class, int.class);
-            FileInputStream in = new FileInputStream(binary);
-            try {
-                byte[] buf = new byte[65536]; int n;
-                while ((n = in.read(buf)) != -1) {
-                    int off = 0;
-                    while (off < n) off += (Integer) write.invoke(null, fd, buf, off, n - off);
-                }
-            } finally { in.close(); }
-            return "/proc/self/fd/" + fdNum;
-        } catch (Exception e) {
-            serverMemFd = null;
-            android.util.Log.w("LlamaServer", "memfd unavailable, using direct path: " + e);
-            return binary.getAbsolutePath();
-        }
+    private File serverBinary() {
+        return new File(nativeLibDir(), "libllama_server.so");
     }
 
     private void js(final String code) {
@@ -231,51 +167,6 @@ public class MainActivity extends Activity {
                 sb.append(f.getName()).append("|").append(f.getAbsolutePath());
             }
             return sb.toString();
-        }
-
-        @JavascriptInterface
-        public void startDownload() {
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        js("onDownloadProgress(0,'Connecting…')");
-                        HttpURLConnection conn = openConn(new URL(RELEASE_URL));
-                        final long total = conn.getContentLength();
-                        File tmp = new File(getCacheDir(), "llama.tar.gz");
-                        InputStream in = new BufferedInputStream(conn.getInputStream(), 65536);
-                        FileOutputStream fout = new FileOutputStream(tmp);
-                        try {
-                            byte[] buf = new byte[65536];
-                            long done = 0; int n;
-                            while ((n = in.read(buf)) != -1) {
-                                fout.write(buf, 0, n);
-                                done += n;
-                                final long d = done;
-                                final int pct = total > 0 ? (int)(d * 60 / total) : 0;
-                                js("onDownloadProgress(" + pct + ",'Downloading… " + d/1048576 + "/" + total/1048576 + " MB')");
-                            }
-                        } finally { in.close(); fout.close(); }
-                        conn.disconnect();
-
-                        js("onDownloadProgress(60,'Extracting…')");
-                        File bd = binDir();
-                        bd.mkdirs();
-                        extractBinaries(tmp, bd, new Progress() {
-                            public void onProgress(int pct) {
-                                js("onDownloadProgress(" + (60 + pct * 40 / 100) + ",'Extracting… " + pct + "%')");
-                            }
-                        });
-                        serverBinary().setExecutable(true, false);
-                        tmp.delete();
-                        js("onDownloadDone()");
-
-                    } catch (final Exception e) {
-                        String raw = e.getMessage() != null ? e.getMessage() : "Unknown error";
-                        String msg = raw.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
-                        js("onDownloadError('" + msg + "')");
-                    }
-                }
-            }).start();
         }
 
         @JavascriptInterface
@@ -420,6 +311,8 @@ public class MainActivity extends Activity {
                 File f = new File(p);
                 sb.append("probe ").append(p).append(": exists=").append(f.exists()).append("\n");
             }
+            sb.append("nativeLibDir: ").append(nativeLibDir().getAbsolutePath()).append("\n");
+            sb.append("llama_server exists: ").append(serverBinary().exists()).append("\n");
             return sb.toString();
         }
 
@@ -470,10 +363,9 @@ public class MainActivity extends Activity {
     // ── Server ────────────────────────────────────────────────────────────────
 
     private void startServer(File model) throws Exception {
-        File bd = binDir();
-        String execPath = prepareExec(serverBinary());
+        File nld = nativeLibDir();
         List<String> cmd = new ArrayList<String>();
-        cmd.add(execPath);
+        cmd.add(serverBinary().getAbsolutePath());
         cmd.add("-m"); cmd.add(model.getAbsolutePath());
         cmd.add("-c"); cmd.add("4096");
         cmd.add("--host"); cmd.add("127.0.0.1");
@@ -481,7 +373,7 @@ public class MainActivity extends Activity {
         cmd.add("-n"); cmd.add("-1");
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.environment().put("LD_LIBRARY_PATH", bd.getAbsolutePath());
+        pb.environment().put("LD_LIBRARY_PATH", nld.getAbsolutePath());
         pb.redirectErrorStream(true);
         serverProcess = pb.start();
 
@@ -527,123 +419,11 @@ public class MainActivity extends Activity {
 
     private void killServer() {
         if (serverProcess != null) { serverProcess.destroy(); serverProcess = null; }
-        serverMemFd = null;
     }
 
     private boolean isAlive(Process p) {
         if (p == null) return false;
         try { p.exitValue(); return false; }
         catch (IllegalThreadStateException e) { return true; }
-    }
-
-    // ── Tar.gz Extraction ─────────────────────────────────────────────────────
-
-    interface Progress { void onProgress(int pct); }
-
-    private static final Set<String> WANTED = new HashSet<String>(Arrays.asList(
-        "llama-server", "libllama.so", "libllama-common.so", "libmtmd.so",
-        "libggml.so", "libggml-base.so"
-    ));
-
-    private void extractBinaries(File archive, File dest, Progress cb) throws IOException {
-        final long estimated = 200L * 1024 * 1024;
-        long extracted = 0;
-        byte[] hdr = new byte[512];
-        byte[] longName = null;
-
-        GZIPInputStream gz = new GZIPInputStream(
-            new BufferedInputStream(new FileInputStream(archive), 65536));
-        try {
-            while (readBlock(gz, hdr)) {
-                if (hdr[0] == 0) break;
-                String name = longName != null
-                    ? new String(longName, "UTF-8").replace("\0", "").trim()
-                    : new String(hdr, 0, 100, "UTF-8").replace("\0", "").trim();
-                longName = null;
-                char type = (char)(hdr[156] & 0xFF);
-                long size = parseOctal(hdr, 124, 12);
-                long padded = ((size + 511) / 512) * 512;
-
-                if (type == 'L') {
-                    longName = new byte[(int) size];
-                    readExact(gz, longName);
-                    skipBytes(gz, padded - size);
-                    continue;
-                }
-
-                String base = new File(name).getName();
-                boolean want = WANTED.contains(base) || base.startsWith("libggml-cpu-android");
-                if ((type == '0' || type == '\0' || type == 0) && size > 0 && want) {
-                    byte[] buf = new byte[65536];
-                    long rem = size;
-                    FileOutputStream fos = new FileOutputStream(new File(dest, base));
-                    try {
-                        while (rem > 0) {
-                            int r = gz.read(buf, 0, (int) Math.min(buf.length, rem));
-                            if (r < 0) break;
-                            fos.write(buf, 0, r);
-                            rem -= r;
-                            extracted += r;
-                            cb.onProgress((int)(extracted * 100 / estimated));
-                        }
-                    } finally { fos.close(); }
-                    skipBytes(gz, padded - size);
-                } else {
-                    skipBytes(gz, padded);
-                }
-            }
-        } finally { gz.close(); }
-    }
-
-    private boolean readBlock(InputStream in, byte[] buf) throws IOException {
-        int off = 0;
-        while (off < buf.length) {
-            int n = in.read(buf, off, buf.length - off);
-            if (n < 0) return off > 0;
-            off += n;
-        }
-        return true;
-    }
-
-    private void readExact(InputStream in, byte[] buf) throws IOException {
-        int off = 0;
-        while (off < buf.length) {
-            int n = in.read(buf, off, buf.length - off);
-            if (n < 0) throw new EOFException();
-            off += n;
-        }
-    }
-
-    private void skipBytes(InputStream in, long bytes) throws IOException {
-        byte[] buf = new byte[8192];
-        long rem = bytes;
-        while (rem > 0) {
-            int r = in.read(buf, 0, (int) Math.min(buf.length, rem));
-            if (r < 0) return;
-            rem -= r;
-        }
-    }
-
-    private long parseOctal(byte[] b, int off, int len) {
-        long v = 0;
-        for (int i = off; i < off + len; i++)
-            if (b[i] >= '0' && b[i] <= '7') v = v * 8 + (b[i] - '0');
-        return v;
-    }
-
-    private HttpURLConnection openConn(URL url) throws IOException {
-        for (int i = 0; i < 10; i++) {
-            HttpURLConnection c = (HttpURLConnection) url.openConnection();
-            c.setInstanceFollowRedirects(false);
-            c.setConnectTimeout(20000);
-            c.setReadTimeout(60000);
-            int code = c.getResponseCode();
-            if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
-                String loc = c.getHeaderField("Location");
-                c.disconnect();
-                url = new URL(loc);
-            } else return c;
-        }
-        throw new IOException("Too many redirects");
     }
 }

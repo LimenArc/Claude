@@ -157,10 +157,6 @@
   .screen-btn:hover{background:var(--accent2)}
   .screen-btn.sec{background:transparent;border:1px solid var(--border);color:var(--muted)}
   .screen-btn.sec:hover{border-color:var(--accent2);color:var(--accent2)}
-  #dl-bar-wrap{width:100%;max-width:300px;background:var(--surface2);
-    border-radius:6px;height:8px;overflow:hidden}
-  #dl-bar{height:100%;background:var(--accent);width:0;transition:width .3s}
-  #dl-status{font-size:12px;color:var(--muted)}
   .model-list{width:100%;max-width:340px;display:flex;flex-direction:column;
     gap:8px;max-height:40vh;overflow-y:auto}
   .model-item{background:var(--surface);border:1px solid var(--border);
@@ -180,22 +176,6 @@
 </style>
 </head>
 <body>
-
-<!-- Setup screen -->
-<div id="screen-setup" class="screen">
-  <div class="screen-icon">🤖</div>
-  <h2>First-Time Setup</h2>
-  <p>Download the AI runtime (~60 MB). This only happens once — after that the app works fully offline with any GGUF model.</p>
-  <button class="screen-btn" onclick="startDownload()">Download Runtime</button>
-</div>
-
-<!-- Download progress screen -->
-<div id="screen-download" class="screen">
-  <div class="screen-icon">⬇️</div>
-  <h2>Downloading Runtime</h2>
-  <div id="dl-bar-wrap"><div id="dl-bar"></div></div>
-  <div id="dl-status">Starting…</div>
-</div>
 
 <!-- Model picker screen -->
 <div id="screen-picker" class="screen">
@@ -325,7 +305,7 @@ var abortCtrl = null;
 var tokIn = 0, tokOut = 0, tokCache = 0;
 
 // ── Screen management ───────────────────────────────────────────────────────
-var SCREENS = ['screen-setup','screen-download','screen-picker','screen-loading'];
+var SCREENS = ['screen-picker','screen-loading'];
 
 function showScreen(id) {
   for (var i = 0; i < SCREENS.length; i++) {
@@ -358,9 +338,7 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 
   var status = AB.getStatus();
-  if (status === 'needs_setup') {
-    showScreen('screen-setup');
-  } else if (status === 'needs_model') {
+  if (status === 'needs_setup' || status === 'needs_model') {
     showScreen('screen-picker');
     loadFolderInput();
     rescanFolder();
@@ -372,30 +350,6 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('change-model-btn').style.display = 'inline-block';
   }
 });
-
-// ── Download callbacks (called by Java via evaluateJavascript) ──────────────
-function startDownload() {
-  showScreen('screen-download');
-  document.getElementById('dl-bar').style.width = '0%';
-  document.getElementById('dl-status').textContent = 'Starting…';
-  if (AB) AB.startDownload();
-}
-
-function onDownloadProgress(pct, msg) {
-  document.getElementById('dl-bar').style.width = pct + '%';
-  document.getElementById('dl-status').textContent = msg;
-}
-
-function onDownloadDone() {
-  showScreen('screen-picker');
-  loadFolderInput();
-  rescanFolder();
-}
-
-function onDownloadError(msg) {
-  showScreen('screen-setup');
-  showErr('Download failed: ' + msg);
-}
 
 // ── Model picker ─────────────────────────────────────────────────────────────
 function loadFolderInput() {
