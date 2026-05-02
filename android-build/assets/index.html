@@ -174,9 +174,101 @@
     background:transparent;color:var(--accent2);cursor:pointer;font-size:12px;
     white-space:nowrap;flex-shrink:0}
   .folder-btn:hover{background:var(--surface2)}
+
+  /* Theme panel */
+  #theme-panel{position:fixed;bottom:60px;right:14px;background:var(--surface);
+    border:1px solid var(--border);border-radius:14px;padding:14px 16px;
+    display:none;z-index:500;box-shadow:0 4px 24px rgba(0,0,0,.5);
+    flex-direction:column;gap:10px;min-width:180px}
+  #theme-panel.show{display:flex}
+  #theme-panel h4{font-size:12px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.5px;margin:0}
+  .theme-swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;
+    border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
+  .swatch.active{border-color:var(--text)}
+  .swatch:hover{transform:scale(1.2)}
+
+  /* History drawer */
+  #hist-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55)}
+  #hist-overlay.show{display:block}
+  #hist-drawer{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:300px;
+    background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;z-index:601;
+    transform:translateX(-100%);transition:transform .25s ease}
+  #hist-overlay.show #hist-drawer{transform:translateX(0)}
+  #hist-head{padding:14px 16px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  #hist-head h3{font-size:15px;font-weight:600;color:var(--text);margin:0}
+  #hist-close{background:none;border:none;color:var(--muted);font-size:22px;
+    cursor:pointer;padding:0 2px;line-height:1}
+  #hist-list{flex:1;overflow-y:auto;padding:8px}
+  #hist-empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:13px}
+  .hi{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:2px;
+    position:relative;display:block;width:100%;text-align:left;
+    background:none;border:none}
+  .hi:hover{background:var(--surface2)}
+  .hi-title{font-size:13px;color:var(--text);overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;display:block;padding-right:24px}
+  .hi-meta{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+  .hi-del{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--muted);cursor:pointer;
+    font-size:14px;padding:4px;border-radius:4px;line-height:1}
+  .hi-del:hover{color:var(--red);background:var(--surface2)}
+
+  /* Memory warning */
+  #mem-warn{position:fixed;top:0;left:0;right:0;z-index:800;
+    background:#92400e;color:#fef3c7;padding:12px 16px;
+    display:none;flex-direction:column;align-items:center;gap:10px;text-align:center}
+  #mem-warn.show{display:flex}
+  #mem-warn p{font-size:13px;margin:0;line-height:1.4}
+  .mw-btns{display:flex;gap:10px}
+  .mw-ok{padding:7px 20px;border-radius:8px;border:none;
+    background:#b45309;color:#fff;cursor:pointer;font-size:13px;font-weight:600}
+  .mw-cancel{padding:7px 20px;border-radius:8px;border:1px solid #b45309;
+    background:transparent;color:#fef3c7;cursor:pointer;font-size:13px}
+
+  /* Icon buttons in header */
+  .icon-btn{padding:5px 8px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:14px;
+    white-space:nowrap;line-height:1}
+  .icon-btn:hover{border-color:var(--accent2);color:var(--accent2)}
 </style>
 </head>
 <body>
+
+<!-- Memory warning bar -->
+<div id="mem-warn">
+  <p id="mem-warn-text"></p>
+  <div class="mw-btns">
+    <button class="mw-cancel" onclick="cancelMemWarn()">Cancel</button>
+    <button class="mw-ok" onclick="confirmMemWarn()">Load Anyway</button>
+  </div>
+</div>
+
+<!-- Theme panel -->
+<div id="theme-panel">
+  <h4>Theme</h4>
+  <div class="theme-swatches">
+    <div class="swatch" id="sw-dark"   style="background:#0f1117" title="Dark"   onclick="setTheme('dark')"></div>
+    <div class="swatch" id="sw-amoled" style="background:#000000" title="AMOLED" onclick="setTheme('amoled')"></div>
+    <div class="swatch" id="sw-navy"   style="background:#0a1628" title="Navy"   onclick="setTheme('navy')"></div>
+    <div class="swatch" id="sw-forest" style="background:#0d1a0e" title="Forest" onclick="setTheme('forest')"></div>
+    <div class="swatch" id="sw-sunset" style="background:#1a0a0e" title="Sunset" onclick="setTheme('sunset')"></div>
+    <div class="swatch" id="sw-light"  style="background:#f1f5f9;border:1px solid #cbd5e1" title="Light" onclick="setTheme('light')"></div>
+  </div>
+</div>
+
+<!-- History drawer -->
+<div id="hist-overlay" onclick="histOverlayClick(event)">
+  <div id="hist-drawer">
+    <div id="hist-head">
+      <h3>Conversations</h3>
+      <button id="hist-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div id="hist-list"></div>
+  </div>
+</div>
 
 <!-- Model picker screen -->
 <div id="screen-picker" class="screen">
@@ -209,6 +301,8 @@
         <button class="mode-btn active" id="btn-local" onclick="setMode('local')">Local</button>
         <button class="mode-btn" id="btn-cloud" onclick="setMode('cloud')">Cloud</button>
       </div>
+      <button class="icon-btn" onclick="showHistory()" title="History">🕐</button>
+      <button class="icon-btn" onclick="toggleThemePanel()" title="Theme">🎨</button>
       <button id="new-chat-btn" onclick="newChat()">+ New</button>
     </div>
 
@@ -324,6 +418,7 @@ function hideScreens() {
 
 // ── Boot ────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
+  initTheme();
   populateModelSelect();
   var saved = localStorage.getItem('cloud_model');
   if (saved) {
@@ -529,7 +624,9 @@ function searchEntirePhone() {
   }
 }
 
+var _modelName = '';
 function setLocalModelName(name) {
+  _modelName = name || '';
   document.getElementById('model-name-label').textContent = name ? '🤖 ' + name : 'No model';
 }
 
@@ -654,11 +751,13 @@ function confirmAddModel() {
 // ── Chat ────────────────────────────────────────────────────────────────────
 function newChat() {
   if (streaming && abortCtrl) { abortCtrl.abort(); }
+  _convId = null;
   messages = [];
   var el = document.getElementById('messages');
   el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div>' +
     '<p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p></div>';
   resetTokenBar();
+  document.getElementById('theme-panel').classList.remove('show');
 }
 
 function addMessage(role, content) {
@@ -719,6 +818,7 @@ async function sendMessage() {
   abortCtrl = null;
   btn.textContent = 'Send';
   btn.disabled = false;
+  saveHistory();
 }
 
 // ── Local streaming (OpenAI /v1/chat/completions SSE) ──────────────────────
@@ -884,6 +984,183 @@ function showErr(msg) {
   t.style.display = 'block';
   clearTimeout(showErr._timer);
   showErr._timer = setTimeout(function(){ t.style.display = 'none'; }, 5000);
+}
+
+// ── Themes ────────────────────────────────────────────────────────────────────
+var THEMES = {
+  dark:   {'--bg':'#0f1117','--surface':'#1a1d27','--surface2':'#22263a','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#2d3348','--user-bg':'#312e81','--asst-bg':'#1e2235','--red':'#ef4444','--green':'#22c55e'},
+  amoled: {'--bg':'#000000','--surface':'#0d0d0d','--surface2':'#141414','--accent':'#6366f1','--accent2':'#818cf8','--text':'#e2e8f0','--muted':'#94a3b8','--border':'#1c1c1c','--user-bg':'#1a1450','--asst-bg':'#080b14','--red':'#ef4444','--green':'#22c55e'},
+  navy:   {'--bg':'#0a1628','--surface':'#102040','--surface2':'#162a52','--accent':'#3b82f6','--accent2':'#60a5fa','--text':'#e2e8f0','--muted':'#8ba3c7','--border':'#1e3660','--user-bg':'#1e3870','--asst-bg':'#0e1e3a','--red':'#ef4444','--green':'#22c55e'},
+  forest: {'--bg':'#0d1a0e','--surface':'#152418','--surface2':'#1c2e20','--accent':'#22c55e','--accent2':'#4ade80','--text':'#e2e8f0','--muted':'#86a892','--border':'#253c28','--user-bg':'#1a3520','--asst-bg':'#121f14','--red':'#ef4444','--green':'#4ade80'},
+  sunset: {'--bg':'#1a0a0e','--surface':'#2a1018','--surface2':'#381620','--accent':'#f97316','--accent2':'#fb923c','--text':'#f0e6ea','--muted':'#c09aa8','--border':'#4a1f2c','--user-bg':'#4a1a28','--asst-bg':'#200d12','--red':'#fb7185','--green':'#4ade80'},
+  light:  {'--bg':'#f8fafc','--surface':'#ffffff','--surface2':'#f1f5f9','--accent':'#6366f1','--accent2':'#4f46e5','--text':'#1e293b','--muted':'#64748b','--border':'#e2e8f0','--user-bg':'#e0e7ff','--asst-bg':'#f1f5f9','--red':'#dc2626','--green':'#16a34a'}
+};
+
+function setTheme(name) {
+  var t = THEMES[name] || THEMES.dark;
+  var root = document.documentElement;
+  for (var k in t) root.style.setProperty(k, t[k]);
+  localStorage.setItem('theme', name);
+  document.querySelectorAll('.swatch').forEach(function(el) {
+    el.classList.toggle('active', el.id === 'sw-' + name);
+  });
+  document.getElementById('theme-panel').classList.remove('show');
+}
+
+function toggleThemePanel() {
+  var p = document.getElementById('theme-panel');
+  p.classList.toggle('show');
+}
+
+function initTheme() {
+  var saved = localStorage.getItem('theme') || 'dark';
+  setTheme(saved);
+  document.addEventListener('click', function(e) {
+    var panel = document.getElementById('theme-panel');
+    if (!panel.contains(e.target) && e.target.title !== 'Theme') {
+      panel.classList.remove('show');
+    }
+  });
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+var _convId = null;
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('chat_history') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveHistory() {
+  if (!messages.length) return;
+  var history = getHistory();
+  var now = Date.now();
+  var title = messages[0].content.slice(0, 60) + (messages[0].content.length > 60 ? '…' : '');
+  if (_convId) {
+    var idx = -1;
+    for (var i = 0; i < history.length; i++) { if (history[i].id === _convId) { idx = i; break; } }
+    if (idx >= 0) {
+      history[idx].messages = messages;
+      history[idx].updated = now;
+      history[idx].model = currentModelName;
+    } else {
+      history.unshift({id:_convId, title:title, created:_convId, updated:now, model:_modelName, messages:messages});
+    }
+  } else {
+    _convId = now;
+    history.unshift({id:_convId, title:title, created:_convId, updated:now, model:_modelName, messages:messages});
+  }
+  if (history.length > 30) history = history.slice(0, 30);
+  localStorage.setItem('chat_history', JSON.stringify(history));
+}
+
+function showHistory() {
+  var list = document.getElementById('hist-list');
+  var history = getHistory();
+  if (!history.length) {
+    list.innerHTML = '<div id="hist-empty">No saved conversations yet.<br>Start chatting to build history.</div>';
+  } else {
+    list.innerHTML = '';
+    history.forEach(function(h) {
+      var d = new Date(h.updated || h.created);
+      var dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) + ' ' +
+                    d.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+      var btn = document.createElement('button');
+      btn.className = 'hi';
+      btn.innerHTML = '<span class="hi-title">' + esc(h.title) + '</span>' +
+        '<span class="hi-meta">' + esc(dateStr) + (h.model ? ' · ' + esc(h.model) : '') + '</span>' +
+        '<button class="hi-del" title="Delete" onclick="deleteHistory(event,' + h.id + ')">✕</button>';
+      btn.onclick = function(e) {
+        if (e.target.classList.contains('hi-del')) return;
+        loadHistoryItem(h);
+      };
+      list.appendChild(btn);
+    });
+  }
+  document.getElementById('hist-overlay').classList.add('show');
+}
+
+function closeHistory() {
+  document.getElementById('hist-overlay').classList.remove('show');
+}
+
+function histOverlayClick(e) {
+  if (e.target.id === 'hist-overlay') closeHistory();
+}
+
+function deleteHistory(e, id) {
+  e.stopPropagation();
+  var history = getHistory().filter(function(h) { return h.id !== id; });
+  localStorage.setItem('chat_history', JSON.stringify(history));
+  if (_convId === id) _convId = null;
+  showHistory();
+}
+
+function loadHistoryItem(h) {
+  closeHistory();
+  messages = h.messages ? h.messages.slice() : [];
+  _convId = h.id;
+  var el = document.getElementById('messages');
+  el.innerHTML = '';
+  if (!messages.length) {
+    el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div>' +
+      '<p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p></div>';
+    return;
+  }
+  messages.forEach(function(m) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + m.role;
+    wrap.innerHTML = '<span class="msg-role">' + (m.role === 'user' ? 'You' : 'Assistant') + '</span>' +
+      '<div class="msg-bubble"></div>';
+    wrap.querySelector('.msg-bubble').textContent = m.content;
+    el.appendChild(wrap);
+  });
+  scrollBottom();
+  if (h.model) setLocalModelName(h.model);
+  hideScreens();
+  applyMode('local');
+  document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
+}
+
+// ── Memory warning ─────────────────────────────────────────────────────────────
+var _pendingModelPath = null;
+
+function estimateRam(filename) {
+  var m = filename.toLowerCase().match(/[_\-\s](\d+(?:\.\d+)?)x?b[_\-\s\.q]/);
+  if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b[_\-\.]/);
+  if (!m) m = filename.toLowerCase().match(/(\d+(?:\.\d+)?)b$/);
+  if (!m) return null;
+  var p = parseFloat(m[1]);
+  if (p < 0.5 || p > 300) return null;
+  var gb = Math.ceil(p * 0.6);
+  return {params: p, gb: gb};
+}
+
+function selectModel(path) {
+  if (!AB) return;
+  if (!AB.pathExists(path)) { showErr('Cannot access: ' + path); return; }
+  var name = path.split('/').pop();
+  var ram = estimateRam(name);
+  if (ram && ram.gb >= 3) {
+    _pendingModelPath = path;
+    var text = 'Loading “' + name + '” may need ~' + ram.gb + ' GB of free RAM (' + ram.params + 'B model). ' +
+      (ram.gb >= 8 ? 'Close all other apps first.' : 'Make sure you have enough free memory.');
+    document.getElementById('mem-warn-text').textContent = text;
+    document.getElementById('mem-warn').classList.add('show');
+  } else {
+    AB.loadModel(path);
+  }
+}
+
+function confirmMemWarn() {
+  document.getElementById('mem-warn').classList.remove('show');
+  if (_pendingModelPath && AB) AB.loadModel(_pendingModelPath);
+  _pendingModelPath = null;
+}
+
+function cancelMemWarn() {
+  document.getElementById('mem-warn').classList.remove('show');
+  _pendingModelPath = null;
 }
 </script>
 </body>
