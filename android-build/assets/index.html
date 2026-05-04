@@ -141,6 +141,60 @@
     border:1px solid var(--border);opacity:0;transition:opacity .25s;pointer-events:none;z-index:50;
   }
   .toast.show{opacity:1}
+
+  /* ─── Matrix sensor panel ─── */
+  #panel-sensors{margin:-14px;padding:0;background:#000;min-height:calc(100vh - 96px)}
+  .matrix-wrap{position:relative;background:#000;color:#00ff5a;font-family:ui-monospace,Menlo,Consolas,monospace;min-height:calc(100vh - 96px)}
+  .matrix-wrap canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+  .matrix-content{position:relative;z-index:2;padding:14px 12px 28px}
+
+  .matrix-header{font-size:12px;letter-spacing:1px;margin-bottom:6px;text-shadow:0 0 6px #0f0}
+  .matrix-prompt{color:#39ff7e;margin-right:6px}
+  .matrix-cmd{color:#a8ffc4}
+  .matrix-blink{color:#0f0;animation:blk 1s steps(2) infinite;margin-left:2px}
+  @keyframes blk{50%{opacity:0}}
+  .matrix-stats{display:flex;gap:14px;font-size:11px;color:#39ff7e;margin-bottom:14px;border-bottom:1px dashed rgba(0,255,90,.25);padding-bottom:8px;text-shadow:0 0 3px #0f0}
+  .matrix-stats b{color:#bfffd0;font-weight:600}
+
+  .matrix-grid{display:grid;grid-template-columns:1fr;gap:8px}
+  @media(min-width:560px){.matrix-grid{grid-template-columns:1fr 1fr}}
+  @media(min-width:880px){.matrix-grid{grid-template-columns:1fr 1fr 1fr}}
+
+  .mcell{
+    background:rgba(0,16,4,0.72);
+    border:1px solid rgba(0,255,90,.35);
+    border-radius:4px;padding:8px 10px 10px;
+    box-shadow:inset 0 0 12px rgba(0,255,90,.06);
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .mcell.active{border-color:rgba(0,255,90,.7);box-shadow:inset 0 0 18px rgba(0,255,90,.12),0 0 8px rgba(0,255,90,.18)}
+  .mhead{display:flex;justify-content:space-between;align-items:center;font-size:13px;letter-spacing:1px}
+  .mname{color:#bfffd0;font-weight:600;text-shadow:0 0 4px #0f0}
+  .mhz{color:#39ff7e;font-size:11px;font-variant-numeric:tabular-nums}
+  .mmeta{display:flex;justify-content:space-between;font-size:10px;color:rgba(0,255,90,.65);margin-top:2px;letter-spacing:.5px}
+  .macc{font-weight:600}
+  .macc.acc0{color:#ff5959}
+  .macc.acc1{color:#ffb454}
+  .macc.acc2{color:#9aff7d}
+  .macc.acc3{color:#bfffd0}
+  .mvendor{font-size:10px;color:rgba(0,255,90,.45);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .maxes{margin-top:8px;display:flex;flex-direction:column;gap:2px}
+  .mrow{display:flex;align-items:center;gap:8px;font-size:12px;font-variant-numeric:tabular-nums}
+  .mlabel{width:24px;color:#39ff7e;font-weight:600}
+  .mval{width:74px;color:#bfffd0;text-align:right;text-shadow:0 0 3px #0f0}
+  .mbar{flex:1;color:#0f0;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-shadow:0 0 4px rgba(0,255,90,.6)}
+
+  .matrix-footer{margin-top:14px}
+  .matrix-hbar{height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,90,.5),transparent);margin-bottom:10px}
+  .matrix-features{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .mflabel{font-size:10px;color:rgba(0,255,90,.55);width:100%;letter-spacing:1px;margin-bottom:4px}
+  .mfpill{
+    display:inline-block;font-size:10px;padding:2px 6px;
+    border:1px solid rgba(0,255,90,.35);color:rgba(180,255,200,.85);
+    border-radius:2px;background:rgba(0,40,16,0.4);
+  }
+  .mfpill.on{border-color:rgba(120,255,170,.8);color:#bfffd0;text-shadow:0 0 3px #0f0}
 </style>
 </head>
 <body>
@@ -263,7 +317,10 @@ function toast(msg) {
 
 // ─── Tabs ────────────────────────────────────────────────────────────────
 const renderers = {};
+let currentTab = "overview";
 function activate(tab) {
+  if (currentTab === "sensors" && tab !== "sensors") leaveSensors();
+  currentTab = tab;
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+tab));
   if (renderers[tab]) renderers[tab]();
@@ -516,54 +573,226 @@ renderers.display = () => {
   `;
 };
 
-// ─── Sensors ────────────────────────────────────────────────────────────
+// ─── Sensors (Matrix UI) ───────────────────────────────────────────────
+const SENSOR_AXES = {
+  1:  {label:"ACCELEROMETER",   axes:["X","Y","Z"], unit:"m/s²", scale:20},
+  2:  {label:"MAGNETIC FIELD",  axes:["X","Y","Z"], unit:"µT",   scale:200},
+  3:  {label:"ORIENTATION",     axes:["AZ","P","R"],unit:"°",    scale:360},
+  4:  {label:"GYROSCOPE",       axes:["X","Y","Z"], unit:"rad/s",scale:35},
+  5:  {label:"LIGHT",           axes:["LX"],        unit:"lux",  scale:40000, log:true},
+  6:  {label:"PRESSURE",        axes:["P"],         unit:"hPa",  scale:1100, base:900},
+  7:  {label:"TEMPERATURE",     axes:["T"],         unit:"°C",   scale:60},
+  8:  {label:"PROXIMITY",       axes:["D"],         unit:"cm",   scale:10},
+  9:  {label:"GRAVITY",         axes:["X","Y","Z"], unit:"m/s²", scale:10},
+  10: {label:"LINEAR ACCEL",    axes:["X","Y","Z"], unit:"m/s²", scale:20},
+  11: {label:"ROTATION VECTOR", axes:["X","Y","Z","W"], unit:"q", scale:1},
+  12: {label:"REL HUMIDITY",    axes:["%"],         unit:"%RH",  scale:100},
+  13: {label:"AMBIENT TEMP",    axes:["T"],         unit:"°C",   scale:60},
+  14: {label:"MAGNETIC UNCAL",  axes:["X","Y","Z"], unit:"µT",   scale:200},
+  15: {label:"GAME ROT VECTOR", axes:["X","Y","Z","W"], unit:"q", scale:1},
+  16: {label:"GYRO UNCAL",      axes:["X","Y","Z"], unit:"rad/s",scale:35},
+  17: {label:"SIGNIFICANT MOT", axes:["E"],         unit:"event",scale:1},
+  18: {label:"STEP DETECTOR",   axes:["E"],         unit:"step", scale:1},
+  19: {label:"STEP COUNTER",    axes:["N"],         unit:"steps",scale:10000},
+  20: {label:"GEO ROT VECTOR",  axes:["X","Y","Z","W"], unit:"q", scale:1},
+  21: {label:"HEART RATE",      axes:["BPM"],       unit:"bpm",  scale:200},
+  28: {label:"HEART BEAT",      axes:["B"],         unit:"beat", scale:1},
+  29: {label:"DEVICE PRIVATE",  axes:["?"],         unit:"",     scale:1},
+  31: {label:"LOW LATENCY OFF", axes:["E"],         unit:"event",scale:1},
+  32: {label:"ACCEL UNCAL",     axes:["X","Y","Z"], unit:"m/s²", scale:20},
+  33: {label:"HINGE ANGLE",     axes:["°"],         unit:"°",    scale:360},
+  34: {label:"HEAD TRACKER",    axes:["X","Y","Z","W"], unit:"q", scale:1},
+};
+const ACCURACY_NAMES = {0:"UNRELIABLE",1:"LOW",2:"MEDIUM",3:"HIGH"};
+
+let sensorList = [];
+let sensorPollTimer = null;
+let sensorRateWindow = {};   // typeId → [recent timestamps] for Hz calc
+let rainHandle = null;
+
+function blockBar(value, scale, base, useLog, width) {
+  width = width || 16;
+  let v;
+  if (useLog) v = value > 0 ? Math.log10(value+1) / Math.log10(scale+1) : 0;
+  else if (base != null) v = (value - base) / (scale - base);
+  else v = (Math.abs(value) || 0) / scale;
+  v = Math.max(0, Math.min(1, v));
+  const filled = Math.round(v * width);
+  return "█".repeat(filled) + "░".repeat(width - filled);
+}
+
 renderers.sensors = () => {
-  const list = JSON.parse(N.getSensors()); snapshot.sensors = list;
+  sensorList = JSON.parse(N.getSensors()); snapshot.sensors = sensorList;
   const features = JSON.parse(N.getFeatures()); snapshot.features = features;
 
   $("#panel-sensors").innerHTML = `
-    <h2>Hardware sensors (${list.length})</h2>
-    <div class="card" id="sensorList">
-      ${list.length ? list.map((s,i)=>`<div class="sensor" data-typeid="${s.typeId}" data-i="${i}">
-        <div class="n">
-          <div>${escape(s.name)}</div>
-          <div style="color:var(--muted);font-size:11px">${escape((s.type||"").replace("android.sensor.",""))}</div>
+    <div class="matrix-wrap">
+      <canvas id="rainCanvas"></canvas>
+      <div class="matrix-content">
+        <div class="matrix-header">
+          <span class="matrix-prompt">root@sysdiag:~$</span>
+          <span class="matrix-cmd">stream --all-sensors --rate=game</span>
+          <span class="matrix-blink">_</span>
         </div>
-        <div class="v">
-          <div>${escape(s.vendor)}</div>
-          <div>±${(s.range||0).toFixed(2)} · res ${(s.resolution||0).toFixed(4)}</div>
-          <div id="reading-${i}" style="color:var(--accent);min-height:14px">tap to read</div>
+        <div class="matrix-stats">
+          <span>SENSORS: <b>${sensorList.length}</b></span>
+          <span>STATUS: <b id="streamStatus">CONNECTING…</b></span>
+          <span>FRAME: <b id="frameCount">0</b></span>
         </div>
-      </div>`).join("") : "<div class='row'><div class='k'>No sensors reported</div></div>"}
-    </div>
+        <div class="matrix-grid" id="sensorGrid">
+          ${sensorList.length ? sensorList.map(s => {
+            const meta = SENSOR_AXES[s.typeId] || {label:(s.type||"").replace("android.sensor.","").toUpperCase(), axes:["?"], unit:"", scale:1};
+            const axes = meta.axes.map((ax,i)=>`
+              <div class="mrow" data-i="${i}">
+                <span class="mlabel">${ax}</span>
+                <span class="mval">+0.000</span>
+                <span class="mbar">${blockBar(0,1)}</span>
+              </div>`).join("");
+            return `<div class="mcell" data-tid="${s.typeId}">
+              <div class="mhead">
+                <span class="mname">${escape(meta.label)}</span>
+                <span class="mhz" id="hz-${s.typeId}">-- Hz</span>
+              </div>
+              <div class="mmeta">
+                <span>${escape((s.type||"").replace("android.sensor.",""))}</span>
+                <span class="macc" id="acc-${s.typeId}">···</span>
+              </div>
+              <div class="mvendor">${escape(s.vendor||"")} · ±${(s.range||0).toFixed(2)} ${meta.unit}</div>
+              <div class="maxes">${axes}</div>
+            </div>`;
+          }).join("") : `<div class="mcell"><div class="mhead"><span class="mname">NO SENSORS REPORTED</span></div></div>`}
+        </div>
 
-    <h2>Hardware features</h2>
-    <div class="card">
-      ${(features.features||[]).map(f=>`<span class="pill">${escape(f.replace("android.hardware.",""))}</span>`).join(" ") || "—"}
-    </div>
-
-    <h2>Location providers</h2>
-    <div class="card">
-      ${(features.locationProviders||[]).map(p=>`<span class="pill blue">${escape(p)}</span>`).join(" ") || "<div class='row'><div class='k'>none</div></div>"}
+        <div class="matrix-footer">
+          <div class="matrix-hbar"></div>
+          <div class="matrix-features">
+            <div class="mflabel">// HARDWARE_FEATURES</div>
+            ${(features.features||[]).map(f=>`<span class="mfpill">${escape(f.replace("android.hardware.",""))}</span>`).join("")}
+          </div>
+          <div class="matrix-features" style="margin-top:10px">
+            <div class="mflabel">// LOCATION_PROVIDERS</div>
+            ${(features.locationProviders||[]).map(p=>`<span class="mfpill on">${escape(p)}</span>`).join("") || '<span class="mfpill">none</span>'}
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
-  document.querySelectorAll("#sensorList .sensor").forEach(el => {
-    el.addEventListener("click", () => {
-      const tid = +el.dataset.typeid, i = +el.dataset.i;
-      const out = $("#reading-"+i);
-      out.innerHTML = '<span class="spinner"></span>reading…';
-      setTimeout(() => {
-        try {
-          const r = JSON.parse(N.readSensorOnce(tid));
-          if (r.error) { out.textContent = "error"; return; }
-          if (!r.ok) { out.textContent = "no event"; return; }
-          out.textContent = (r.values||[]).slice(0,3).map(v=>v.toFixed(3)).join(", ");
-        } catch(e) { out.textContent = "error"; }
-      }, 30);
-    });
-  });
+  startMatrixRain();
+  N.startStream();
+  $("#streamStatus").textContent = "LIVE";
+  startSensorPoll();
 };
+
+function startSensorPoll() {
+  stopSensorPoll();
+  let frame = 0;
+  const update = () => {
+    frame++;
+    let data;
+    try { data = JSON.parse(N.pollStream()); } catch(e) { return; }
+    const fc = $("#frameCount"); if (fc) fc.textContent = String(frame);
+
+    sensorList.forEach(s => {
+      const tid = s.typeId;
+      const cell = document.querySelector(`.mcell[data-tid="${tid}"]`);
+      if (!cell) return;
+      const ev = data[tid];
+      if (!ev) return;
+      const meta = SENSOR_AXES[tid] || {axes:["?"], scale:1};
+
+      // Rate (Hz) — keep last 8 timestamps
+      if (ev.t != null) {
+        const w = sensorRateWindow[tid] = sensorRateWindow[tid] || [];
+        w.push(ev.t);
+        if (w.length > 8) w.shift();
+        if (w.length >= 2) {
+          const dt = (w[w.length-1] - w[0]) / 1e9;
+          const hz = (w.length-1) / dt;
+          const hzEl = document.getElementById("hz-"+tid);
+          if (hzEl) hzEl.textContent = (hz>=1?hz.toFixed(0):hz.toFixed(1)) + " Hz";
+        }
+      }
+
+      // Accuracy
+      if (ev.a != null) {
+        const accEl = document.getElementById("acc-"+tid);
+        if (accEl) {
+          accEl.textContent = ACCURACY_NAMES[ev.a] || ("ACC "+ev.a);
+          accEl.className = "macc acc"+ev.a;
+        }
+      }
+
+      // Values
+      const rows = cell.querySelectorAll(".mrow");
+      const vals = ev.v || [];
+      rows.forEach((r, i) => {
+        const v = vals[i] != null ? vals[i] : 0;
+        const valEl = r.querySelector(".mval");
+        const barEl = r.querySelector(".mbar");
+        if (valEl) valEl.textContent = (v>=0?"+":"") + v.toFixed(3);
+        if (barEl) barEl.textContent = blockBar(v, meta.scale, meta.base, meta.log, 16);
+      });
+
+      cell.classList.add("active");
+    });
+  };
+  sensorPollTimer = setInterval(update, 80);
+}
+
+function stopSensorPoll() {
+  if (sensorPollTimer) { clearInterval(sensorPollTimer); sensorPollTimer = null; }
+  sensorRateWindow = {};
+}
+
+function leaveSensors() {
+  stopSensorPoll();
+  stopMatrixRain();
+  try { N.stopStream(); } catch(e){}
+}
+
+function startMatrixRain() {
+  const c = document.getElementById("rainCanvas");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const fit = () => {
+    const r = c.getBoundingClientRect();
+    c.width  = Math.floor(r.width * dpr);
+    c.height = Math.floor(r.height * dpr);
+  };
+  fit();
+  const fontSize = 14 * dpr;
+  const cols = Math.floor(c.width / fontSize);
+  const drops = new Array(cols).fill(0).map(() => Math.random() * c.height / fontSize);
+  const glyphs = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎ0123456789ABCDEF<>{}[]/\\=*-+|";
+
+  let last = 0;
+  const draw = (now) => {
+    if (!rainHandle) return;
+    if (now - last >= 60) {
+      ctx.fillStyle = "rgba(0,8,2,0.18)";
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.font = fontSize + "px ui-monospace, Menlo, monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const ch = glyphs.charAt(Math.floor(Math.random() * glyphs.length));
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        ctx.fillStyle = Math.random() < 0.04 ? "rgba(180,255,200,0.95)" : "rgba(0,255,90,0.55)";
+        ctx.fillText(ch, x, y);
+        if (y > c.height && Math.random() > 0.97) drops[i] = 0;
+        drops[i] += 1;
+      }
+      last = now;
+    }
+    rainHandle = requestAnimationFrame(draw);
+  };
+  rainHandle = requestAnimationFrame(draw);
+}
+
+function stopMatrixRain() {
+  if (rainHandle) { cancelAnimationFrame(rainHandle); rainHandle = null; }
+}
 
 // ─── Network ───────────────────────────────────────────────────────────
 renderers.network = () => {

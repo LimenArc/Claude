@@ -71,6 +71,17 @@ public class MainActivity extends Activity {
     private WebView webView;
     private SensorManager sensorManager;
 
+    // Live sensor stream state — values come in on the main thread,
+    // are read by the WebView (JS bridge) thread.
+    private final java.util.concurrent.ConcurrentHashMap<Integer, float[]> latestValues =
+        new java.util.concurrent.ConcurrentHashMap<Integer, float[]>();
+    private final java.util.concurrent.ConcurrentHashMap<Integer, Long> latestTimestamp =
+        new java.util.concurrent.ConcurrentHashMap<Integer, Long>();
+    private final java.util.concurrent.ConcurrentHashMap<Integer, Integer> latestAccuracy =
+        new java.util.concurrent.ConcurrentHashMap<Integer, Integer>();
+    private SensorEventListener streamListener;
+    private boolean streamActive = false;
+
     // GPU info captured once on a temporary EGL context
     private String glRenderer = "Unknown";
     private String glVendor = "Unknown";
@@ -94,6 +105,53 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new Bridge(), "Native");
         webView.setWebViewClient(new WebViewClient());
         webView.loadUrl("file:///android_asset/index.html");
+    }
+
+    @Override
+    protected void onPause() { super.onPause(); stopSensorStream(); }
+
+    @Override
+    protected void onResume() { super.onResume(); /* JS will restart if on sensors tab */ }
+
+    @Override
+    protected void onDestroy() { super.onDestroy(); stopSensorStream(); }
+
+    // ─── Sensor streaming ─────────────────────────────────────────────────────
+
+    private void startSensorStream() {
+        if (streamActive) return;
+        streamActive = true;
+        streamListener = new SensorEventListener() {
+            public void onSensorChanged(SensorEvent e) {
+                int n = e.values.length;
+                float[] copy = new float[n];
+                System.arraycopy(e.values, 0, copy, 0, n);
+                int t = e.sensor.getType();
+                latestValues.put(t, copy);
+                latestTimestamp.put(t, e.timestamp);
+            }
+            public void onAccuracyChanged(Sensor s, int a) {
+                latestAccuracy.put(s.getType(), a);
+            }
+        };
+        for (Sensor s : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+            // Skip one-shot/special-reporting sensors that won't stream
+            int rep = (Build.VERSION.SDK_INT >= 21) ? s.getReportingMode() : 0;
+            if (rep == 2 /* REPORTING_MODE_ONE_SHOT */) continue;
+            sensorManager.registerListener(streamListener, s, SensorManager.SENSOR_DELAY_GAME);
+        }
+    }
+
+    private void stopSensorStream() {
+        if (!streamActive) return;
+        streamActive = false;
+        if (streamListener != null) {
+            try { sensorManager.unregisterListener(streamListener); } catch (Exception ignored) {}
+            streamListener = null;
+        }
+        latestValues.clear();
+        latestTimestamp.clear();
+        latestAccuracy.clear();
     }
 
     // ─── JavaScript bridge ────────────────────────────────────────────────────
@@ -346,6 +404,37 @@ public class MainActivity extends Activity {
                     arr.put(o);
                 }
                 return arr.toString();
+            } catch (Exception e) { return errorJson(e); }
+        }
+
+        @JavascriptInterface
+        public void startStream() {
+            ui.post(new Runnable() { public void run() { startSensorStream(); }});
+        }
+
+        @JavascriptInterface
+        public void stopStream() {
+            ui.post(new Runnable() { public void run() { stopSensorStream(); }});
+        }
+
+        @JavascriptInterface
+        public String pollStream() {
+            try {
+                JSONObject o = new JSONObject();
+                for (Integer k : latestValues.keySet()) {
+                    JSONObject e = new JSONObject();
+                    float[] v = latestValues.get(k);
+                    if (v == null) continue;
+                    JSONArray a = new JSONArray();
+                    for (float f : v) a.put((double) f);
+                    e.put("v", a);
+                    Long t = latestTimestamp.get(k);
+                    if (t != null) e.put("t", (double) t.longValue());
+                    Integer acc = latestAccuracy.get(k);
+                    if (acc != null) e.put("a", acc.intValue());
+                    o.put(String.valueOf(k), e);
+                }
+                return o.toString();
             } catch (Exception e) { return errorJson(e); }
         }
 
