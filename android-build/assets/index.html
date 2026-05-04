@@ -3,636 +3,845 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-<title>Multi-Model Chat</title>
+<title>SysDiag</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
-    --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
-    --accent:#6366f1;--accent2:#818cf8;
-    --text:#e2e8f0;--muted:#94a3b8;--border:#2d3348;
-    --user-bg:#312e81;--asst-bg:#1e2235;--red:#ef4444;--green:#22c55e;
+    --bg:#0b0e14;
+    --surface:#141823;
+    --surface2:#1c2030;
+    --border:#262b3d;
+    --text:#e6e9f2;
+    --muted:#8a90a6;
+    --accent:#5b8cff;
+    --accent2:#7c5cff;
+    --green:#2ec27e;
+    --orange:#f0883e;
+    --red:#f85149;
+    --yellow:#f1c40f;
   }
-  html,body{height:100%;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    font-size:15px;overflow:hidden}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font:14px/1.45 -apple-system,Roboto,"Segoe UI",sans-serif;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
   #app{display:flex;flex-direction:column;height:100%}
+  header{
+    padding:14px 16px 10px;
+    background:linear-gradient(180deg,#171b29,#0f1320);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  header h1{font-size:17px;font-weight:600;letter-spacing:.3px}
+  header h1 span{color:var(--accent)}
+  header .actions{display:flex;gap:8px}
+  header button{
+    background:var(--surface2);color:var(--text);border:1px solid var(--border);
+    padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer
+  }
+  header button:active{background:#2a3046}
 
-  /* Header */
-  #header{background:var(--surface);border-bottom:1px solid var(--border);
-    padding:10px 14px;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
-  #header-top{display:flex;align-items:center;gap:8px}
-  #app-title{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;flex:1}
-  #mode-btns{display:flex;gap:4px}
-  .mode-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:13px;transition:all .2s}
-  .mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-  #new-chat-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap}
-  #new-chat-btn:hover{border-color:var(--accent);color:var(--accent)}
+  nav{
+    display:flex;gap:4px;padding:8px 8px 0;overflow-x:auto;
+    background:#0f1320;border-bottom:1px solid var(--border);scrollbar-width:none
+  }
+  nav::-webkit-scrollbar{display:none}
+  nav button{
+    flex:0 0 auto;background:transparent;color:var(--muted);border:none;
+    padding:10px 14px;border-radius:8px 8px 0 0;font-size:13px;cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  nav button.active{color:var(--text);border-bottom-color:var(--accent);background:rgba(91,140,255,.07)}
 
-  /* Local mode info row */
-  #local-info{display:flex;align-items:center;gap:8px}
-  #model-name-label{font-size:12px;color:var(--muted);flex:1;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  #change-model-btn{padding:3px 10px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--accent2);cursor:pointer;font-size:11px;white-space:nowrap}
-  #change-model-btn:hover{background:var(--surface2)}
+  main{flex:1;overflow-y:auto;padding:14px;padding-bottom:32px}
+  .panel{display:none}
+  .panel.active{display:block}
 
-  /* Cloud model row */
-  #cloud-model-row{display:none;align-items:center;gap:6px}
-  #model-select{flex:1;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px}
-  #add-model-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--accent2);cursor:pointer;font-size:12px}
-  #add-model-btn:hover{background:var(--surface2)}
-  #apikey-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:11px;white-space:nowrap}
-  #apikey-btn:hover{background:var(--surface2)}
+  h2{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 4px 8px}
+  h2:first-child{margin-top:0}
 
-  /* System prompt */
-  #sysprompt-row{display:flex;gap:6px}
-  #sysprompt{flex:1;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:6px;padding:6px 8px;
-    font-size:12px;resize:none;min-height:34px;max-height:72px;
-    font-family:inherit;line-height:1.4}
-  #sysprompt::placeholder{color:var(--muted)}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:10px;
+  }
+  .card.tight{padding:10px 12px}
+  .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px dashed #232839}
+  .row:last-child{border-bottom:none}
+  .row .k{color:var(--muted);font-size:12px;flex:1 1 auto}
+  .row .v{color:var(--text);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;word-break:break-all;max-width:60%}
+  .v.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
 
-  /* API Key screen */
-  #apikey-screen{display:none;flex-direction:column;gap:14px;
-    padding:28px 20px;align-items:center;justify-content:center;flex:1}
-  #apikey-screen .ak-icon{font-size:36px;opacity:.6}
-  #apikey-screen h2{font-size:18px;font-weight:600;color:var(--text);text-align:center}
-  #apikey-screen p{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
-  #apikey-input{width:100%;max-width:380px;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;
-    font-family:monospace}
-  #apikey-input::placeholder{color:var(--muted)}
-  #apikey-save-btn{padding:10px 28px;border-radius:8px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
-  #apikey-save-btn:hover{background:var(--accent2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .stat .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+  .stat .value{font-size:20px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .stat .sub{font-size:11px;color:var(--muted);margin-top:2px}
 
-  /* Messages */
-  #messages{flex:1;overflow-y:auto;padding:12px 14px;
-    display:flex;flex-direction:column;gap:10px}
-  #messages::-webkit-scrollbar{width:4px}
-  #messages::-webkit-scrollbar-track{background:transparent}
-  #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-  .msg{display:flex;flex-direction:column;gap:3px;max-width:90%}
-  .msg.user{align-self:flex-end;align-items:flex-end}
-  .msg.assistant{align-self:flex-start;align-items:flex-start}
-  .msg-role{font-size:10px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.5px;padding:0 4px}
-  .msg-bubble{padding:9px 13px;border-radius:12px;line-height:1.55;
-    white-space:pre-wrap;word-break:break-word;font-size:14px}
-  .msg.user .msg-bubble{background:var(--user-bg);color:#c7d2fe;border-bottom-right-radius:4px}
-  .msg.assistant .msg-bubble{background:var(--asst-bg);color:var(--text);border-bottom-left-radius:4px}
-  .msg-bubble.streaming::after{content:'▌';
-    animation:blink .7s steps(1) infinite;color:var(--accent2)}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  .bar{position:relative;height:8px;background:#1a1f2e;border-radius:4px;overflow:hidden;margin-top:6px}
+  .bar > span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width .3s}
+  .bar.ok > span{background:linear-gradient(90deg,#1a8a5c,var(--green))}
+  .bar.warn > span{background:linear-gradient(90deg,#a85a17,var(--orange))}
+  .bar.danger > span{background:linear-gradient(90deg,#a4242a,var(--red))}
 
-  /* Token bar */
-  #token-bar{padding:5px 14px;background:var(--surface);
-    border-top:1px solid var(--border);font-size:11px;color:var(--muted);
-    display:none;gap:10px;flex-wrap:wrap;flex-shrink:0}
-  .tok-item{display:flex;gap:4px;align-items:center}
-  .tok-val{color:var(--accent2);font-weight:600}
-  .tok-cache{color:var(--green);font-weight:600}
+  .core{display:flex;align-items:center;gap:8px;padding:6px 0}
+  .core .idx{width:36px;color:var(--muted);font-size:12px}
+  .core .freq{width:90px;font-variant-numeric:tabular-nums;text-align:right;font-size:12px}
+  .core .bar{flex:1}
+  .core .gov{width:74px;font-size:11px;color:var(--muted);text-align:right}
 
-  /* Input */
-  #input-row{background:var(--surface);border-top:1px solid var(--border);
-    padding:10px 14px;display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
-  #user-input{flex:1;background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:10px;padding:9px 12px;
-    font-size:14px;font-family:inherit;resize:none;min-height:40px;
-    max-height:120px;line-height:1.45;outline:none;transition:border .15s}
-  #user-input:focus{border-color:var(--accent)}
-  #user-input::placeholder{color:var(--muted)}
-  #send-btn{padding:9px 18px;border-radius:10px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:14px;
-    font-weight:600;white-space:nowrap;flex-shrink:0;transition:background .15s}
-  #send-btn:hover:not(:disabled){background:var(--accent2)}
-  #send-btn:disabled{opacity:.5;cursor:not-allowed}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;background:var(--surface2);color:var(--text);border:1px solid var(--border);margin:2px 2px 0 0}
+  .pill.green{background:rgba(46,194,126,.15);border-color:rgba(46,194,126,.4);color:#7adfb1}
+  .pill.red{background:rgba(248,81,73,.12);border-color:rgba(248,81,73,.35);color:#f49a96}
+  .pill.warn{background:rgba(240,136,62,.12);border-color:rgba(240,136,62,.35);color:#f5b885}
+  .pill.blue{background:rgba(91,140,255,.12);border-color:rgba(91,140,255,.4);color:#a8c0ff}
 
-  /* Empty state */
-  #empty-state{display:flex;flex-direction:column;align-items:center;
-    justify-content:center;flex:1;gap:10px;color:var(--muted);padding:20px;text-align:center}
-  #empty-state .es-icon{font-size:36px;opacity:.35}
-  #empty-state p{font-size:13px;max-width:280px}
+  button.primary{
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#fff;border:none;padding:11px 16px;border-radius:10px;
+    font-size:13px;font-weight:600;cursor:pointer;width:100%;
+  }
+  button.primary:disabled{opacity:.55}
+  button.ghost{
+    background:var(--surface2);color:var(--text);border:1px solid var(--border);
+    padding:9px 12px;border-radius:8px;font-size:12px;cursor:pointer;
+  }
 
-  /* Dialog */
-  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);
-    z-index:200;align-items:center;justify-content:center;padding:20px}
-  #overlay.show{display:flex}
-  #dialog{background:var(--surface);border:1px solid var(--border);
-    border-radius:12px;padding:22px;width:100%;max-width:340px;
-    display:flex;flex-direction:column;gap:14px}
-  #dialog h3{color:var(--text);font-size:16px;font-weight:600}
-  #dialog p{color:var(--muted);font-size:12px}
-  #dialog-input{background:var(--surface2);color:var(--text);
-    border:1px solid var(--border);border-radius:8px;
-    padding:9px 12px;font-size:13px;width:100%;font-family:monospace}
-  #dialog-input:focus{outline:none;border-color:var(--accent)}
-  #dialog-btns{display:flex;gap:8px;justify-content:flex-end}
-  .dlg-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);
-    background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
-  .dlg-ok{padding:7px 16px;border-radius:8px;border:none;
-    background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600}
-  .dlg-ok:hover{background:var(--accent2)}
+  .bench-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+  .bench-row:last-child{border:none}
+  .bench-row .info{flex:1}
+  .bench-row .info b{display:block;margin-bottom:2px}
+  .bench-row .info span{color:var(--muted);font-size:12px}
+  .bench-row .score{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--green);min-width:96px;text-align:right}
+  .bench-row .score.pending{color:var(--muted);font-weight:400;font-size:13px}
 
-  /* Error toast */
-  #err-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-    background:var(--red);color:#fff;padding:8px 16px;border-radius:10px;
-    font-size:12px;display:none;z-index:300;max-width:90%;text-align:center}
+  .sensor{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #232839;gap:8px}
+  .sensor:last-child{border:none}
+  .sensor .n{flex:1;font-size:13px}
+  .sensor .v{color:var(--muted);font-size:11px;text-align:right}
+
+  pre.report{
+    font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:11px;color:#cbd2e8;background:#0a0d15;border:1px solid var(--border);
+    border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-all;
+    max-height:55vh;overflow:auto;
+  }
+
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:sp 1s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .toast{
+    position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+    background:#1d2436;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;
+    border:1px solid var(--border);opacity:0;transition:opacity .25s;pointer-events:none;z-index:50;
+  }
+  .toast.show{opacity:1}
 </style>
 </head>
 <body>
 <div id="app">
-
-  <!-- Header -->
-  <div id="header">
-    <div id="header-top">
-      <span id="app-title">Multi-Model Chat</span>
-      <div id="mode-btns">
-        <button class="mode-btn active" id="btn-local" onclick="setMode('local')">Local</button>
-        <button class="mode-btn" id="btn-cloud" onclick="setMode('cloud')">Cloud</button>
-      </div>
-      <button id="new-chat-btn" onclick="newChat()">+ New</button>
+  <header>
+    <h1><span>◆</span> SysDiag</h1>
+    <div class="actions">
+      <button id="refreshBtn">Refresh</button>
     </div>
-
-    <!-- Local info row -->
-    <div id="local-info">
-      <span id="model-name-label">Initializing…</span>
-      <button id="change-model-btn" onclick="doChangeModel()" style="display:none">Change Model</button>
-    </div>
-
-    <!-- Cloud model row -->
-    <div id="cloud-model-row">
-      <select id="model-select" onchange="saveCloudModel()"></select>
-      <button id="add-model-btn" onclick="showAddModelDialog()">+ Model</button>
-      <button id="apikey-btn" onclick="showApikeyScreen()">🔑 Key</button>
-    </div>
-
-    <!-- System prompt -->
-    <div id="sysprompt-row">
-      <textarea id="sysprompt" rows="1" placeholder="System prompt (optional)…"
-        oninput="autoResize(this)"></textarea>
-    </div>
-  </div>
-
-  <!-- API Key screen (shown when cloud + no key) -->
-  <div id="apikey-screen">
-    <div class="ak-icon">🔑</div>
-    <h2>Anthropic API Key</h2>
-    <p>Enter your API key to use Claude models. Stored locally on your device only.</p>
-    <input id="apikey-input" type="password" placeholder="sk-ant-…" autocomplete="off"
-      onkeydown="if(event.key==='Enter')saveApiKey()"/>
-    <button id="apikey-save-btn" onclick="saveApiKey()">Save Key &amp; Continue</button>
-  </div>
-
-  <!-- Messages -->
-  <div id="messages">
-    <div id="empty-state">
-      <div class="es-icon">💬</div>
-      <p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p>
-    </div>
-  </div>
-
-  <!-- Token usage bar (cloud) -->
-  <div id="token-bar">
-    <span class="tok-item">In: <span class="tok-val" id="tok-in">0</span></span>
-    <span class="tok-item">Out: <span class="tok-val" id="tok-out">0</span></span>
-    <span class="tok-item" id="cache-item" style="display:none">
-      Cache: <span class="tok-cache" id="tok-cache">0</span>
-    </span>
-  </div>
-
-  <!-- Input -->
-  <div id="input-row">
-    <textarea id="user-input" rows="1" placeholder="Type a message… (Enter to send)"
-      oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-    <button id="send-btn" onclick="sendMessage()">Send</button>
-  </div>
-
+  </header>
+  <nav id="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="cpu">CPU</button>
+    <button data-tab="memory">Memory</button>
+    <button data-tab="battery">Battery &amp; Thermal</button>
+    <button data-tab="display">Display &amp; GPU</button>
+    <button data-tab="sensors">Sensors</button>
+    <button data-tab="network">Network</button>
+    <button data-tab="benchmark">Benchmark</button>
+    <button data-tab="report">Report</button>
+  </nav>
+  <main>
+    <div class="panel active" id="panel-overview"></div>
+    <div class="panel" id="panel-cpu"></div>
+    <div class="panel" id="panel-memory"></div>
+    <div class="panel" id="panel-battery"></div>
+    <div class="panel" id="panel-display"></div>
+    <div class="panel" id="panel-sensors"></div>
+    <div class="panel" id="panel-network"></div>
+    <div class="panel" id="panel-benchmark"></div>
+    <div class="panel" id="panel-report"></div>
+  </main>
 </div>
-
-<!-- Add custom model dialog -->
-<div id="overlay" onclick="overlayClick(event)">
-  <div id="dialog">
-    <h3>Add Custom Model</h3>
-    <p>Enter any Claude model ID (e.g. claude-opus-4-20250514)</p>
-    <input id="dialog-input" type="text" placeholder="claude-…"
-      autocapitalize="none" spellcheck="false"
-      onkeydown="if(event.key==='Enter')confirmAddModel()"/>
-    <div id="dialog-btns">
-      <button class="dlg-cancel" onclick="hideOverlay()">Cancel</button>
-      <button class="dlg-ok" onclick="confirmAddModel()">Add</button>
-    </div>
-  </div>
-</div>
-
-<div id="err-toast"></div>
+<div id="toast" class="toast"></div>
 
 <script>
-// ── Android bridge ──────────────────────────────────────────────────────────
-const AB = window.Android || null;
-const localPort = AB ? AB.getLocalPort() : 8080;
+"use strict";
 
-// ── Constants ───────────────────────────────────────────────────────────────
-const BUILTIN_MODELS = [
-  {id:'claude-opus-4-20250514',  label:'Opus 4.7'},
-  {id:'claude-opus-4-5',         label:'Opus 4.6'},
-  {id:'claude-sonnet-4-5',       label:'Sonnet 4.6'},
-  {id:'claude-haiku-4-5',        label:'Haiku 4.5'},
-];
+// ─── Bridge wrapper (with mock fallback for previewing on desktop) ──────────
+const N = (function(){
+  if (window.Native) return window.Native;
+  // Mock for browser preview
+  const mock = {
+    getOverview: () => JSON.stringify({device:"Preview Device",brand:"Mock",product:"x",board:"y",hardware:"z",
+      androidRelease:"15",sdkInt:35,codename:"REL",incremental:"123",securityPatch:"2026-04-01",
+      bootloader:"unknown",fingerprint:"mock/preview/x:15/AB/123:user/release-keys",
+      kernel:"6.1.0-mock",uptimeMs:1234567,locale:"en_US",timezone:"UTC"}),
+    getCpu: () => JSON.stringify({cores:8,supportedAbis:["arm64-v8a"],supported32:["armeabi-v7a"],supported64:["arm64-v8a"],
+      arch:"aarch64",hardware:"Mock SoC",processor:"AArch64",features:"fp asimd",
+      perCore:Array.from({length:8},(_,i)=>({index:i,cur:1500000+i*200000,min:300000,max:2800000,governor:"schedutil",driver:"qcom"})),
+      loadavg:"0.42 0.38 0.30 1/345 6789"}),
+    getMemory: () => JSON.stringify({totalRam:8e9,availRam:3.5e9,usedRam:4.5e9,threshold:2e8,lowMemory:false,
+      memTotal:8e9,memFree:1.2e9,memAvail:3.5e9,buffers:5e7,cached:2.3e9,swapTotal:2e9,swapFree:1e9,swapCached:1e7,vmallocTotal:0,
+      storage:[{label:"Internal /data",path:"/data",total:128e9,free:46e9,used:82e9}],
+      heap:{max:5.36e8,total:6e7,free:2e7,used:4e7,nativeAlloc:1.5e7,nativeSize:2e7,nativeFree:5e6}}),
+    getBattery: () => JSON.stringify({percent:78.0,level:78,scale:100,status:"Discharging",plugged:"On battery",
+      health:"Good",temperatureC:32.4,voltageV:4.123,technology:"Li-ion",
+      currentNowUA:-450000,currentAvgUA:-420000,capacityPct:78,chargeCounterUAh:3500000,
+      thermalZones:[{zone:"thermal_zone0",type:"cpu-thermal",tempC:42.3},{zone:"thermal_zone1",type:"battery",tempC:32.5}]}),
+    getDisplay: () => JSON.stringify({widthPx:1080,heightPx:2400,density:2.75,densityDpi:440,xdpi:401,ydpi:401,
+      scaledDensity:2.75,refreshRate:120,rotation:0,name:"Mock",
+      modes:[{id:1,w:1080,h:2400,hz:60},{id:2,w:1080,h:2400,hz:120}],
+      gpu:{renderer:"Adreno (Mock)",vendor:"Qualcomm",version:"OpenGL ES 3.2",extensions:"GL_EXT_..."},
+      nightMode:true,fontScale:1.0}),
+    getSensors: () => JSON.stringify([
+      {name:"Mock Accel",vendor:"Mock",type:"android.sensor.accelerometer",typeId:1,version:1,power:0.13,range:39.2,resolution:0.01,minDelayUs:5000},
+      {name:"Mock Gyro",vendor:"Mock",type:"android.sensor.gyroscope",typeId:4,version:1,power:0.5,range:34.9,resolution:0.001,minDelayUs:5000}
+    ]),
+    readSensorOnce: () => JSON.stringify({values:[0.01,0.02,9.81,0,0,0],ok:true}),
+    getNetwork: () => JSON.stringify({downstreamKbps:50000,upstreamKbps:5000,wifi:true,cellular:false,ethernet:false,vpn:false,validated:true,metered:false,
+      interface:"wlan0",dns:["1.1.1.1","8.8.8.8"],
+      wifi:{enabled:true,rssi:-52,linkSpeedMbps:433,frequencyMhz:5180,ssid:"\"PreviewNet\"",bssid:"00:11:22:33:44:55",hiddenSsid:false,standard:6},
+      telephony:{operator:"",country:"us",simState:1,phoneType:0},
+      interfaces:[{name:"wlan0",display:"wlan0",up:true,loopback:false,mtu:1500,addresses:["192.168.1.42"]}],
+      bluetooth:{present:true,enabled:false,name:"Phone"}}),
+    getFeatures: () => JSON.stringify({features:["android.hardware.wifi","android.hardware.bluetooth_le","android.hardware.camera","android.hardware.fingerprint"],
+      appsInstalled:142,locationProviders:["gps","network","fused"]}),
+    benchmarkCpuInt: (ms) => { const start=performance.now(); let x=12345n; let ops=0;
+      while(performance.now()-start<ms){ for(let i=0;i<4096;i++){ x = (x ^ (x<<13n)) & 0xffffffffffffffffn; } ops+=4096; }
+      return JSON.stringify({ops,ms,checksum:Number(x)}); },
+    benchmarkCpuFloat: (ms) => { const start=performance.now(); let c=0; let ops=0;
+      while(performance.now()-start<ms){ for(let i=0;i<4096;i++){ c = Math.sqrt(c*c+1); } ops+=4096; }
+      return JSON.stringify({ops,ms,checksum:c}); },
+    benchmarkMemory: (mb,it) => JSON.stringify({mbPerSec:8500,bytes:mb*1048576*it,ns:1e9,checksum:0})
+  };
+  return mock;
+})();
 
-// ── State ───────────────────────────────────────────────────────────────────
-let mode = 'local';
-let messages = [];
-let streaming = false;
-let abortCtrl = null;
-let tokIn = 0, tokOut = 0, tokCache = 0;
+// ─── Helpers ─────────────────────────────────────────────────────────────
+const $ = sel => document.querySelector(sel);
+const fmtBytes = n => {
+  if (n == null || isNaN(n)) return "—";
+  const u = ["B","KiB","MiB","GiB","TiB"]; let i = 0; let v = Number(n);
+  while (v >= 1024 && i < u.length-1) { v /= 1024; i++; }
+  return v.toFixed(v < 10 && i > 0 ? 2 : 1) + " " + u[i];
+};
+const fmtHz = khz => {
+  if (khz == null) return "—";
+  const v = Number(khz);
+  if (v >= 1e6) return (v/1e6).toFixed(2) + " GHz";
+  if (v >= 1e3) return (v/1e3).toFixed(0) + " MHz";
+  return v + " kHz";
+};
+const fmtUptime = ms => {
+  if (!ms) return "—";
+  let s = Math.floor(ms/1000);
+  const d = Math.floor(s/86400); s -= d*86400;
+  const h = Math.floor(s/3600); s -= h*3600;
+  const m = Math.floor(s/60); s -= m*60;
+  return (d?`${d}d `:"") + `${h}h ${m}m ${s}s`;
+};
+const escape = s => String(s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
-// ── Boot ────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', function() {
-  populateModelSelect();
-  // Restore saved model
-  const saved = localStorage.getItem('cloud_model');
-  if (saved) {
-    const sel = document.getElementById('model-select');
-    if (sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
+const row = (k,v,mono) => `<div class="row"><div class="k">${escape(k)}</div><div class="v ${mono?"mono":""}">${v??"—"}</div></div>`;
+
+function toast(msg) {
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove("show"), 1800);
+}
+
+// ─── Tabs ────────────────────────────────────────────────────────────────
+const renderers = {};
+function activate(tab) {
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+tab));
+  if (renderers[tab]) renderers[tab]();
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => activate(b.dataset.tab)));
+
+// ─── Cache last-snapshot data for the report ─────────────────────────────
+const snapshot = {};
+
+// ─── Overview ───────────────────────────────────────────────────────────
+renderers.overview = () => {
+  const o = JSON.parse(N.getOverview()); snapshot.overview = o;
+  const m = JSON.parse(N.getMemory()); snapshot.memory = m;
+  const b = JSON.parse(N.getBattery()); snapshot.battery = b;
+  const cpu = JSON.parse(N.getCpu()); snapshot.cpu = cpu;
+
+  const ramPct = m.totalRam ? (m.usedRam / m.totalRam * 100) : 0;
+  const storage0 = (m.storage||[])[0] || {};
+  const stoPct = storage0.total ? ((storage0.total - storage0.free)/storage0.total*100) : 0;
+  const battPct = b.percent != null ? b.percent : 0;
+  const battCls = battPct < 20 ? "danger" : battPct < 50 ? "warn" : "ok";
+
+  $("#panel-overview").innerHTML = `
+    <div class="grid2">
+      <div class="stat">
+        <div class="label">Device</div>
+        <div class="value" style="font-size:15px">${escape(o.device)}</div>
+        <div class="sub">Android ${escape(o.androidRelease)} · API ${o.sdkInt}</div>
+      </div>
+      <div class="stat">
+        <div class="label">CPU</div>
+        <div class="value" style="font-size:15px">${escape(cpu.hardware || cpu.processor || "Unknown")}</div>
+        <div class="sub">${cpu.cores} cores · ${escape((cpu.supportedAbis||[])[0]||"")}</div>
+      </div>
+      <div class="stat">
+        <div class="label">RAM</div>
+        <div class="value">${fmtBytes(m.usedRam)} / ${fmtBytes(m.totalRam)}</div>
+        <div class="bar ${ramPct>85?"danger":ramPct>65?"warn":""}"><span style="width:${ramPct.toFixed(1)}%"></span></div>
+      </div>
+      <div class="stat">
+        <div class="label">Storage</div>
+        <div class="value">${fmtBytes(storage0.total - storage0.free)} / ${fmtBytes(storage0.total)}</div>
+        <div class="bar ${stoPct>90?"danger":stoPct>75?"warn":""}"><span style="width:${stoPct.toFixed(1)}%"></span></div>
+      </div>
+      <div class="stat">
+        <div class="label">Battery</div>
+        <div class="value">${battPct.toFixed(0)}%</div>
+        <div class="bar ${battCls}"><span style="width:${battPct.toFixed(1)}%"></span></div>
+        <div class="sub">${escape(b.status)} · ${b.temperatureC?b.temperatureC.toFixed(1)+"°C":"—"}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Uptime</div>
+        <div class="value" style="font-size:15px">${fmtUptime(o.uptimeMs)}</div>
+        <div class="sub">${escape(o.timezone)}</div>
+      </div>
+    </div>
+
+    <h2>Build</h2>
+    <div class="card">
+      ${row("Brand", escape(o.brand))}
+      ${row("Product", escape(o.product))}
+      ${row("Board", escape(o.board))}
+      ${row("Hardware", escape(o.hardware))}
+      ${row("Bootloader", escape(o.bootloader))}
+      ${row("Kernel", escape(o.kernel), true)}
+      ${row("Security patch", escape(o.securityPatch))}
+      ${row("Codename", escape(o.codename))}
+      ${row("Build incremental", escape(o.incremental), true)}
+      ${row("Fingerprint", escape(o.fingerprint), true)}
+      ${row("Locale", escape(o.locale))}
+    </div>
+  `;
+};
+
+// ─── CPU ────────────────────────────────────────────────────────────────
+renderers.cpu = () => {
+  const c = JSON.parse(N.getCpu()); snapshot.cpu = c;
+  const cores = c.perCore || [];
+  const overallMax = Math.max(1, ...cores.map(x=>x.max||0));
+  const features = (c.features || "").split(/\s+/).filter(Boolean);
+
+  $("#panel-cpu").innerHTML = `
+    <h2>Processor</h2>
+    <div class="card">
+      ${row("Cores", c.cores)}
+      ${row("Architecture", escape(c.arch))}
+      ${row("Hardware", escape(c.hardware))}
+      ${row("Processor", escape(c.processor))}
+      ${row("Implementer", escape(c.implementer))}
+      ${row("Part / Variant / Rev", escape((c.part||"?")+" / "+(c.variant||"?")+" / "+(c.revision||"?")))}
+      ${row("Supported ABIs", (c.supportedAbis||[]).map(a=>`<span class="pill blue">${escape(a)}</span>`).join(""))}
+      ${row("Load average", escape(c.loadavg), true)}
+    </div>
+
+    <h2>Per-core frequency</h2>
+    <div class="card">
+      ${cores.map(cc => {
+        const cur = cc.cur || 0, max = cc.max || overallMax;
+        const pct = max ? Math.min(100, cur/max*100) : 0;
+        return `<div class="core">
+          <div class="idx">CPU${cc.index}</div>
+          <div class="bar"><span style="width:${pct.toFixed(1)}%"></span></div>
+          <div class="freq">${fmtHz(cur)}</div>
+          <div class="gov">${escape(cc.governor||"")}</div>
+        </div>`;
+      }).join("") || "<div class='row'><div class='k'>(no per-core data)</div></div>"}
+    </div>
+
+    <h2>CPU features</h2>
+    <div class="card">
+      ${features.length ? features.map(f=>`<span class="pill">${escape(f)}</span>`).join(" ") : "<div class='row'><div class='k'>none reported</div></div>"}
+    </div>
+  `;
+};
+
+// ─── Memory ──────────────────────────────────────────────────────────────
+renderers.memory = () => {
+  const m = JSON.parse(N.getMemory()); snapshot.memory = m;
+  const used = m.usedRam || 0, total = m.totalRam || 1;
+  const ramPct = used/total*100;
+  const swapUsed = (m.swapTotal||0) - (m.swapFree||0);
+  const swapPct = m.swapTotal ? swapUsed/m.swapTotal*100 : 0;
+
+  $("#panel-memory").innerHTML = `
+    <h2>RAM</h2>
+    <div class="card">
+      <div class="bar ${ramPct>85?"danger":ramPct>65?"warn":""}" style="height:10px"><span style="width:${ramPct.toFixed(1)}%"></span></div>
+      <div class="row"><div class="k">Used</div><div class="v">${fmtBytes(used)} (${ramPct.toFixed(1)}%)</div></div>
+      ${row("Available", fmtBytes(m.availRam))}
+      ${row("Total", fmtBytes(m.totalRam))}
+      ${row("Buffers", fmtBytes(m.buffers))}
+      ${row("Cached", fmtBytes(m.cached))}
+      ${row("Low memory", m.lowMemory ? '<span class="pill red">Yes</span>' : '<span class="pill green">No</span>')}
+      ${row("Threshold", fmtBytes(m.threshold))}
+    </div>
+
+    <h2>Swap</h2>
+    <div class="card">
+      ${m.swapTotal ? `
+        <div class="bar"><span style="width:${swapPct.toFixed(1)}%"></span></div>
+        <div class="row"><div class="k">Used</div><div class="v">${fmtBytes(swapUsed)} (${swapPct.toFixed(1)}%)</div></div>
+        ${row("Free", fmtBytes(m.swapFree))}
+        ${row("Total", fmtBytes(m.swapTotal))}
+        ${row("Cached", fmtBytes(m.swapCached))}
+      ` : "<div class='row'><div class='k'>No swap configured</div></div>"}
+    </div>
+
+    <h2>Storage volumes</h2>
+    <div class="card">
+      ${(m.storage||[]).map(s=>{
+        const pct = s.total ? ((s.total-s.free)/s.total*100) : 0;
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span>${escape(s.label)}</span>
+            <span style="color:var(--muted)">${fmtBytes(s.total-s.free)} / ${fmtBytes(s.total)}</span>
+          </div>
+          <div class="bar ${pct>90?"danger":pct>75?"warn":""}"><span style="width:${pct.toFixed(1)}%"></span></div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    <h2>App memory (this process)</h2>
+    <div class="card">
+      ${row("JVM heap used", fmtBytes(m.heap.used))}
+      ${row("JVM heap total", fmtBytes(m.heap.total))}
+      ${row("JVM heap max", fmtBytes(m.heap.max))}
+      ${row("Native heap allocated", fmtBytes(m.heap.nativeAlloc))}
+      ${row("Native heap size", fmtBytes(m.heap.nativeSize))}
+    </div>
+  `;
+};
+
+// ─── Battery & Thermal ───────────────────────────────────────────────────
+renderers.battery = () => {
+  const b = JSON.parse(N.getBattery()); snapshot.battery = b;
+  const pct = b.percent || 0;
+  const cls = pct < 20 ? "danger" : pct < 50 ? "warn" : "ok";
+  const currentMa = b.currentNowUA != null ? (b.currentNowUA/1000).toFixed(0) : null;
+  const isCharging = b.status === "Charging";
+
+  $("#panel-battery").innerHTML = `
+    <h2>Battery</h2>
+    <div class="card">
+      <div class="bar ${cls}" style="height:12px"><span style="width:${pct.toFixed(1)}%"></span></div>
+      <div class="row"><div class="k">Charge</div><div class="v">${pct.toFixed(1)}%</div></div>
+      ${row("Status", `<span class="pill ${isCharging?"green":""}">${escape(b.status)}</span>`)}
+      ${row("Power source", escape(b.plugged))}
+      ${row("Health", escape(b.health))}
+      ${row("Technology", escape(b.technology))}
+      ${row("Voltage", b.voltageV?b.voltageV.toFixed(3)+" V":"—")}
+      ${row("Temperature", b.temperatureC?b.temperatureC.toFixed(1)+" °C":"—")}
+      ${currentMa!==null ? row("Current", currentMa+" mA "+(b.currentNowUA<0?"(draw)":"(charge)")) : ""}
+      ${b.capacityPct!=null ? row("Reported capacity", b.capacityPct+"%") : ""}
+      ${b.chargeCounterUAh ? row("Charge counter", (b.chargeCounterUAh/1000).toFixed(0)+" mAh") : ""}
+      ${b.energyCounterNWh ? row("Energy counter", (b.energyCounterNWh/1e9).toFixed(2)+" Wh") : ""}
+    </div>
+
+    <h2>Thermal zones</h2>
+    <div class="card">
+      ${(b.thermalZones||[]).length ? (b.thermalZones||[]).map(z=>{
+        const t = z.tempC;
+        const hot = t!=null && t>70 ? "danger" : t!=null && t>55 ? "warn" : "";
+        return `<div class="row">
+          <div class="k">${escape(z.type||z.zone)}</div>
+          <div class="v"><span class="pill ${hot==="danger"?"red":hot==="warn"?"warn":"green"}">${t!=null?t.toFixed(1)+" °C":"—"}</span></div>
+        </div>`;
+      }).join("") : "<div class='row'><div class='k'>No accessible thermal zones</div></div>"}
+    </div>
+  `;
+};
+
+// ─── Display & GPU ──────────────────────────────────────────────────────
+renderers.display = () => {
+  const d = JSON.parse(N.getDisplay()); snapshot.display = d;
+  const inches = Math.sqrt((d.widthPx/d.xdpi)**2 + (d.heightPx/d.ydpi)**2);
+
+  $("#panel-display").innerHTML = `
+    <h2>Display</h2>
+    <div class="card">
+      ${row("Resolution", `${d.widthPx} × ${d.heightPx}`)}
+      ${row("Density", `${d.densityDpi} dpi · ×${d.density}`)}
+      ${row("Physical size", inches?inches.toFixed(2)+" in":"—")}
+      ${row("Refresh rate", `${(d.refreshRate||0).toFixed(1)} Hz`)}
+      ${row("Rotation", `${d.rotation*90}°`)}
+      ${row("Font scale", (d.fontScale||1).toFixed(2))}
+      ${row("Night mode", d.nightMode?'<span class="pill blue">Active</span>':'<span class="pill">Off</span>')}
+    </div>
+
+    ${d.modes && d.modes.length ? `
+    <h2>Supported modes</h2>
+    <div class="card">
+      ${d.modes.map(m=>`<div class="row">
+        <div class="k">Mode ${m.id}</div>
+        <div class="v">${m.w}×${m.h} @ ${m.hz.toFixed(1)} Hz</div>
+      </div>`).join("")}
+    </div>` : ""}
+
+    <h2>GPU</h2>
+    <div class="card">
+      ${row("Renderer", escape(d.gpu.renderer))}
+      ${row("Vendor", escape(d.gpu.vendor))}
+      ${row("Version", escape(d.gpu.version))}
+    </div>
+    <div class="card">
+      <div class="row"><div class="k">GL extensions</div></div>
+      <div style="font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);max-height:160px;overflow:auto;margin-top:6px">
+        ${escape((d.gpu.extensions||"").trim() || "(none)")}
+      </div>
+    </div>
+  `;
+};
+
+// ─── Sensors ────────────────────────────────────────────────────────────
+renderers.sensors = () => {
+  const list = JSON.parse(N.getSensors()); snapshot.sensors = list;
+  const features = JSON.parse(N.getFeatures()); snapshot.features = features;
+
+  $("#panel-sensors").innerHTML = `
+    <h2>Hardware sensors (${list.length})</h2>
+    <div class="card" id="sensorList">
+      ${list.length ? list.map((s,i)=>`<div class="sensor" data-typeid="${s.typeId}" data-i="${i}">
+        <div class="n">
+          <div>${escape(s.name)}</div>
+          <div style="color:var(--muted);font-size:11px">${escape((s.type||"").replace("android.sensor.",""))}</div>
+        </div>
+        <div class="v">
+          <div>${escape(s.vendor)}</div>
+          <div>±${(s.range||0).toFixed(2)} · res ${(s.resolution||0).toFixed(4)}</div>
+          <div id="reading-${i}" style="color:var(--accent);min-height:14px">tap to read</div>
+        </div>
+      </div>`).join("") : "<div class='row'><div class='k'>No sensors reported</div></div>"}
+    </div>
+
+    <h2>Hardware features</h2>
+    <div class="card">
+      ${(features.features||[]).map(f=>`<span class="pill">${escape(f.replace("android.hardware.",""))}</span>`).join(" ") || "—"}
+    </div>
+
+    <h2>Location providers</h2>
+    <div class="card">
+      ${(features.locationProviders||[]).map(p=>`<span class="pill blue">${escape(p)}</span>`).join(" ") || "<div class='row'><div class='k'>none</div></div>"}
+    </div>
+  `;
+
+  document.querySelectorAll("#sensorList .sensor").forEach(el => {
+    el.addEventListener("click", () => {
+      const tid = +el.dataset.typeid, i = +el.dataset.i;
+      const out = $("#reading-"+i);
+      out.innerHTML = '<span class="spinner"></span>reading…';
+      setTimeout(() => {
+        try {
+          const r = JSON.parse(N.readSensorOnce(tid));
+          if (r.error) { out.textContent = "error"; return; }
+          if (!r.ok) { out.textContent = "no event"; return; }
+          out.textContent = (r.values||[]).slice(0,3).map(v=>v.toFixed(3)).join(", ");
+        } catch(e) { out.textContent = "error"; }
+      }, 30);
+    });
+  });
+};
+
+// ─── Network ───────────────────────────────────────────────────────────
+renderers.network = () => {
+  const n = JSON.parse(N.getNetwork()); snapshot.network = n;
+  const w = n.wifi || {};
+  const t = n.telephony || {};
+
+  $("#panel-network").innerHTML = `
+    <h2>Active connection</h2>
+    <div class="card">
+      ${row("Interface", escape(n.interface))}
+      ${row("Transports", [
+        n.wifi&&"<span class='pill blue'>Wi-Fi</span>",
+        n.cellular&&"<span class='pill warn'>Cellular</span>",
+        n.ethernet&&"<span class='pill'>Ethernet</span>",
+        n.vpn&&"<span class='pill'>VPN</span>"
+      ].filter(Boolean).join(" ") || "—")}
+      ${row("Validated internet", n.validated?'<span class="pill green">Yes</span>':'<span class="pill red">No</span>')}
+      ${row("Metered", n.metered?'<span class="pill warn">Yes</span>':'<span class="pill green">No</span>')}
+      ${row("Downstream", n.downstreamKbps?(n.downstreamKbps>=1000?(n.downstreamKbps/1000).toFixed(1)+" Mbps":n.downstreamKbps+" kbps"):"—")}
+      ${row("Upstream", n.upstreamKbps?(n.upstreamKbps>=1000?(n.upstreamKbps/1000).toFixed(1)+" Mbps":n.upstreamKbps+" kbps"):"—")}
+      ${row("DNS", (n.dns||[]).map(d=>`<span class="pill">${escape(d)}</span>`).join(" ") || "—")}
+    </div>
+
+    <h2>Wi-Fi</h2>
+    <div class="card">
+      ${row("Enabled", w.enabled?'<span class="pill green">On</span>':'<span class="pill">Off</span>')}
+      ${row("SSID", escape(w.ssid||"—"))}
+      ${row("BSSID", escape(w.bssid||"—"), true)}
+      ${row("RSSI", w.rssi!=null?w.rssi+" dBm":"—")}
+      ${row("Link speed", w.linkSpeedMbps?w.linkSpeedMbps+" Mbps":"—")}
+      ${row("Frequency", w.frequencyMhz?(w.frequencyMhz/1000).toFixed(2)+" GHz":"—")}
+      ${row("Standard", w.standard?wifiStandardName(w.standard):"—")}
+    </div>
+
+    <h2>Cellular</h2>
+    <div class="card">
+      ${row("Operator", escape(t.operator||"—"))}
+      ${row("Country", escape(t.country||"—"))}
+      ${row("SIM state", simStateName(t.simState))}
+      ${row("Phone type", phoneTypeName(t.phoneType))}
+    </div>
+
+    <h2>Bluetooth</h2>
+    <div class="card">
+      ${n.bluetooth.present ? `${row("Enabled", n.bluetooth.enabled?'<span class="pill green">On</span>':'<span class="pill">Off</span>')}${row("Adapter", escape(n.bluetooth.name||"—"))}` : "<div class='row'><div class='k'>Not present</div></div>"}
+    </div>
+
+    <h2>Interfaces</h2>
+    <div class="card">
+      ${(n.interfaces||[]).map(i=>`<div class="row">
+        <div class="k">${escape(i.name)} ${i.up?'<span class="pill green">up</span>':'<span class="pill">down</span>'}</div>
+        <div class="v mono">${(i.addresses||[]).map(a=>escape(a)).join("<br>")||"—"}${i.mac?"<br><span style='color:var(--muted)'>"+escape(i.mac)+"</span>":""}</div>
+      </div>`).join("")}
+    </div>
+  `;
+};
+function wifiStandardName(n) {
+  return ({1:"802.11a/b/g",4:"802.11n",5:"802.11ac",6:"802.11ax (Wi-Fi 6)",7:"802.11be (Wi-Fi 7)"})[n] || ("std "+n);
+}
+function simStateName(s) { return ({0:"Unknown",1:"Absent",2:"PIN required",3:"PUK required",4:"Locked",5:"Ready",6:"Not ready",7:"Permanently disabled",8:"Card IO error"})[s] || "—"; }
+function phoneTypeName(p) { return ({0:"None",1:"GSM",2:"CDMA",3:"SIP"})[p] || "—"; }
+
+// ─── Benchmark ───────────────────────────────────────────────────────────
+const benchState = {int:null, float:null, mem:null};
+
+function runBench(kind) {
+  const card = $("#bench-"+kind);
+  const score = card.querySelector(".score");
+  score.classList.add("pending");
+  score.innerHTML = '<span class="spinner"></span>running…';
+  setTimeout(() => {
+    let r;
+    try {
+      if (kind === "int") r = JSON.parse(N.benchmarkCpuInt(2000));
+      else if (kind === "float") r = JSON.parse(N.benchmarkCpuFloat(2000));
+      else r = JSON.parse(N.benchmarkMemory(16, 4));
+    } catch(e) { score.textContent = "error"; return; }
+    benchState[kind] = r;
+    score.classList.remove("pending");
+    if (kind === "int") score.textContent = (r.ops/r.ms/1000).toFixed(1) + " Mop/s";
+    else if (kind === "float") score.textContent = (r.ops/r.ms/1000).toFixed(1) + " Mflop/s";
+    else score.textContent = (r.mbPerSec||0).toFixed(0) + " MB/s";
+    snapshot.benchmark = benchState;
+    toast("Benchmark complete");
+  }, 30);
+}
+
+renderers.benchmark = () => {
+  $("#panel-benchmark").innerHTML = `
+    <h2>Benchmarks</h2>
+    <div class="card">
+      <div class="bench-row" id="bench-int">
+        <div class="info"><b>Integer throughput</b><span>2 s xorshift loop · single-core</span></div>
+        <div class="score pending">—</div>
+      </div>
+      <div class="bench-row" id="bench-float">
+        <div class="info"><b>Floating-point</b><span>2 s sqrt + FMA loop · single-core</span></div>
+        <div class="score pending">—</div>
+      </div>
+      <div class="bench-row" id="bench-mem">
+        <div class="info"><b>Memory bandwidth</b><span>64 MB sequential read</span></div>
+        <div class="score pending">—</div>
+      </div>
+    </div>
+    <div class="card">
+      <button class="primary" id="benchAll">Run all benchmarks</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="ghost" data-b="int" style="flex:1">Integer</button>
+        <button class="ghost" data-b="float" style="flex:1">Float</button>
+        <button class="ghost" data-b="mem" style="flex:1">Memory</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">
+        Higher is better. Results vary with thermal throttling and other system load.
+      </div>
+    </div>
+  `;
+  $("#benchAll").addEventListener("click", () => {
+    runBench("int");
+    setTimeout(()=>runBench("float"), 2200);
+    setTimeout(()=>runBench("mem"), 4500);
+  });
+  document.querySelectorAll('#panel-benchmark [data-b]').forEach(b =>
+    b.addEventListener("click", () => runBench(b.dataset.b)));
+};
+
+// ─── Report ─────────────────────────────────────────────────────────────
+renderers.report = () => {
+  $("#panel-report").innerHTML = `
+    <h2>System report</h2>
+    <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="primary" id="genReport" style="flex:2">Generate full report</button>
+        <button class="ghost" id="copyReport" style="flex:1">Copy</button>
+      </div>
+      <pre class="report" id="reportOut">Tap "Generate full report" to capture every metric in plain text.</pre>
+    </div>
+  `;
+  $("#genReport").addEventListener("click", generateReport);
+  $("#copyReport").addEventListener("click", () => {
+    const t = $("#reportOut").textContent;
+    if (!t) return;
+    try { navigator.clipboard.writeText(t); toast("Copied to clipboard"); }
+    catch(e) {
+      const ta = document.createElement("textarea");
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); toast("Copied"); } catch(_) { toast("Copy failed"); }
+      document.body.removeChild(ta);
+    }
+  });
+};
+
+function generateReport() {
+  // Force-refresh every section
+  snapshot.overview = JSON.parse(N.getOverview());
+  snapshot.cpu = JSON.parse(N.getCpu());
+  snapshot.memory = JSON.parse(N.getMemory());
+  snapshot.battery = JSON.parse(N.getBattery());
+  snapshot.display = JSON.parse(N.getDisplay());
+  snapshot.sensors = JSON.parse(N.getSensors());
+  snapshot.network = JSON.parse(N.getNetwork());
+  snapshot.features = JSON.parse(N.getFeatures());
+
+  const o = snapshot.overview, c = snapshot.cpu, m = snapshot.memory, b = snapshot.battery,
+        d = snapshot.display, s = snapshot.sensors, n = snapshot.network, f = snapshot.features;
+
+  let out = "";
+  const line = (k,v) => { out += k.padEnd(28) + " " + (v??"—") + "\n"; };
+  const head = h => out += "\n══ " + h + " " + "═".repeat(Math.max(0,46-h.length)) + "\n";
+
+  out += "SysDiag report — " + new Date().toISOString() + "\n";
+  out += "═".repeat(54) + "\n";
+
+  head("Device");
+  line("Model", o.device);
+  line("Brand / product", o.brand + " / " + o.product);
+  line("Board / hardware", o.board + " / " + o.hardware);
+  line("Android", o.androidRelease + " (API " + o.sdkInt + ")");
+  line("Security patch", o.securityPatch);
+  line("Bootloader", o.bootloader);
+  line("Kernel", o.kernel);
+  line("Build incremental", o.incremental);
+  line("Fingerprint", o.fingerprint);
+  line("Locale / timezone", o.locale + " / " + o.timezone);
+  line("Uptime", fmtUptime(o.uptimeMs));
+
+  head("CPU");
+  line("Cores", c.cores);
+  line("Architecture", c.arch);
+  line("Hardware", c.hardware);
+  line("Processor", c.processor);
+  line("ABIs", (c.supportedAbis||[]).join(", "));
+  line("Load average", c.loadavg);
+  line("Features", c.features);
+  out += "  Per-core:\n";
+  (c.perCore||[]).forEach(cc => {
+    out += "    CPU" + cc.index + "  cur=" + fmtHz(cc.cur) + "  max=" + fmtHz(cc.max) +
+           "  gov=" + (cc.governor||"?") + "\n";
+  });
+
+  head("Memory");
+  line("RAM total", fmtBytes(m.totalRam));
+  line("RAM used", fmtBytes(m.usedRam));
+  line("RAM available", fmtBytes(m.availRam));
+  line("Buffers / cached", fmtBytes(m.buffers) + " / " + fmtBytes(m.cached));
+  line("Swap total / free", fmtBytes(m.swapTotal) + " / " + fmtBytes(m.swapFree));
+  out += "  Storage:\n";
+  (m.storage||[]).forEach(st => {
+    out += "    " + (st.label||"?").padEnd(28) + " " + fmtBytes(st.total-st.free) + " / " + fmtBytes(st.total) + "\n";
+  });
+
+  head("Battery & Thermal");
+  line("Charge", (b.percent||0).toFixed(1) + "%");
+  line("Status", b.status + " (" + b.plugged + ")");
+  line("Health", b.health);
+  line("Technology", b.technology);
+  line("Voltage", b.voltageV ? b.voltageV.toFixed(3)+" V" : "—");
+  line("Temperature", b.temperatureC ? b.temperatureC.toFixed(1)+" °C" : "—");
+  if (b.currentNowUA != null) line("Current draw", (b.currentNowUA/1000).toFixed(0) + " mA");
+  if (b.chargeCounterUAh) line("Charge counter", (b.chargeCounterUAh/1000).toFixed(0) + " mAh");
+  out += "  Thermal zones:\n";
+  (b.thermalZones||[]).forEach(z => {
+    out += "    " + (z.type||z.zone).padEnd(28) + " " + (z.tempC!=null?z.tempC.toFixed(1)+" °C":"—") + "\n";
+  });
+
+  head("Display & GPU");
+  line("Resolution", d.widthPx + "×" + d.heightPx + " @ " + (d.refreshRate||0).toFixed(1) + " Hz");
+  line("Density", d.densityDpi + " dpi (×" + d.density + ")");
+  line("GPU renderer", d.gpu.renderer);
+  line("GPU vendor", d.gpu.vendor);
+  line("GL version", d.gpu.version);
+
+  head("Network");
+  line("Interface", n.interface);
+  if (n.wifi) {
+    line("Wi-Fi SSID", n.wifi.ssid);
+    line("Wi-Fi RSSI", n.wifi.rssi!=null?n.wifi.rssi+" dBm":"—");
+    line("Wi-Fi link", n.wifi.linkSpeedMbps?n.wifi.linkSpeedMbps+" Mbps":"—");
+    line("Wi-Fi freq", n.wifi.frequencyMhz?(n.wifi.frequencyMhz/1000).toFixed(2)+" GHz":"—");
   }
-  // Show local mode initially
-  applyMode('local');
-  // Update local model name
-  if (AB) {
-    const name = AB.getModelName();
-    setLocalModelName(name || 'No model loaded');
-  } else {
-    setLocalModelName('Browser mode (no Android bridge)');
+  line("Validated", n.validated?"Yes":"No");
+  line("Metered", n.metered?"Yes":"No");
+  line("DNS", (n.dns||[]).join(", "));
+  out += "  Interfaces:\n";
+  (n.interfaces||[]).forEach(i => {
+    out += "    " + (i.name + (i.up?" (up)":" (down)")).padEnd(28) +
+           " " + (i.addresses||[]).join(", ") + "\n";
+  });
+
+  head("Sensors (" + (s||[]).length + ")");
+  (s||[]).forEach(sn => {
+    out += "  " + (sn.name||"?").padEnd(34) + " " + (sn.type||"").replace("android.sensor.","") + "\n";
+  });
+
+  if (snapshot.benchmark) {
+    head("Benchmarks");
+    const bm = snapshot.benchmark;
+    if (bm.int) line("Integer", (bm.int.ops/bm.int.ms/1000).toFixed(1) + " Mop/s");
+    if (bm.float) line("Float", (bm.float.ops/bm.float.ms/1000).toFixed(1) + " Mflop/s");
+    if (bm.mem) line("Memory bandwidth", (bm.mem.mbPerSec||0).toFixed(0) + " MB/s");
   }
+
+  head("Hardware features");
+  out += "  " + (f.features||[]).map(x=>x.replace("android.hardware.","")).join(", ") + "\n";
+
+  $("#reportOut").textContent = out;
+  toast("Report ready · " + out.length + " chars");
+}
+
+// ─── Refresh ────────────────────────────────────────────────────────────
+$("#refreshBtn").addEventListener("click", () => {
+  const tab = document.querySelector("nav button.active").dataset.tab;
+  if (renderers[tab]) renderers[tab]();
+  toast("Refreshed");
 });
 
-// ── onModelReady — called by Java via evaluateJavascript ───────────────────
-function onModelReady(name) {
-  setLocalModelName(name);
-}
-
-function setLocalModelName(name) {
-  document.getElementById('model-name-label').textContent = name ? '🤖 ' + name : 'No model';
-}
-
-// ── Mode switching ──────────────────────────────────────────────────────────
-function setMode(m) {
-  mode = m;
-  applyMode(m);
-}
-
-function applyMode(m) {
-  mode = m;
-  document.getElementById('btn-local').classList.toggle('active', m === 'local');
-  document.getElementById('btn-cloud').classList.toggle('active', m === 'cloud');
-
-  var localInfo    = document.getElementById('local-info');
-  var cloudRow     = document.getElementById('cloud-model-row');
-  var apikeyScr    = document.getElementById('apikey-screen');
-  var messagesEl   = document.getElementById('messages');
-  var inputRow     = document.getElementById('input-row');
-  var tokenBar     = document.getElementById('token-bar');
-
-  if (m === 'local') {
-    localInfo.style.display  = 'flex';
-    cloudRow.style.display   = 'none';
-    apikeyScr.style.display  = 'none';
-    messagesEl.style.display = 'flex';
-    inputRow.style.display   = 'flex';
-    tokenBar.style.display   = 'none';
-    document.getElementById('change-model-btn').style.display = AB ? 'inline-block' : 'none';
-  } else {
-    localInfo.style.display  = 'none';
-    cloudRow.style.display   = 'flex';
-    tokenBar.style.display   = 'flex';
-    var key = localStorage.getItem('anthropic_key') || '';
-    if (!key) {
-      showApikeyScreen();
-    } else {
-      apikeyScr.style.display  = 'none';
-      messagesEl.style.display = 'flex';
-      inputRow.style.display   = 'flex';
-    }
-  }
-}
-
-function showApikeyScreen() {
-  document.getElementById('apikey-screen').style.display  = 'flex';
-  document.getElementById('messages').style.display       = 'none';
-  document.getElementById('input-row').style.display      = 'none';
-}
-
-function saveApiKey() {
-  var v = document.getElementById('apikey-input').value.trim();
-  if (!v.startsWith('sk-')) { showErr('Key must start with sk-ant-…'); return; }
-  localStorage.setItem('anthropic_key', v);
-  document.getElementById('apikey-screen').style.display  = 'none';
-  document.getElementById('messages').style.display       = 'flex';
-  document.getElementById('input-row').style.display      = 'flex';
-}
-
-// ── Local model controls ────────────────────────────────────────────────────
-function doChangeModel() {
-  if (AB) AB.changeModel();
-}
-
-// ── Cloud model selector ────────────────────────────────────────────────────
-function populateModelSelect() {
-  var sel = document.getElementById('model-select');
-  sel.innerHTML = '';
-  var custom = getCustomModels();
-  var all = BUILTIN_MODELS.concat(custom.map(function(id){ return {id:id, label:id}; }));
-  all.forEach(function(m) {
-    var o = document.createElement('option');
-    o.value = m.id; o.textContent = m.label || m.id;
-    sel.appendChild(o);
-  });
-}
-
-function saveCloudModel() {
-  var sel = document.getElementById('model-select');
-  localStorage.setItem('cloud_model', sel.value);
-}
-
-function getCustomModels() {
-  try { return JSON.parse(localStorage.getItem('custom_models') || '[]'); }
-  catch(e) { return []; }
-}
-
-function saveCustomModelsList(arr) {
-  localStorage.setItem('custom_models', JSON.stringify(arr));
-}
-
-function showAddModelDialog() {
-  document.getElementById('dialog-input').value = '';
-  document.getElementById('overlay').classList.add('show');
-  setTimeout(function(){ document.getElementById('dialog-input').focus(); }, 60);
-}
-
-function hideOverlay() {
-  document.getElementById('overlay').classList.remove('show');
-}
-
-function overlayClick(e) {
-  if (e.target.id === 'overlay') hideOverlay();
-}
-
-function confirmAddModel() {
-  var v = document.getElementById('dialog-input').value.trim();
-  if (!v) return;
-  var custom = getCustomModels();
-  if (custom.indexOf(v) === -1) {
-    custom.push(v);
-    saveCustomModelsList(custom);
-    populateModelSelect();
-    var sel = document.getElementById('model-select');
-    // add option and select it
-    sel.value = v;
-    localStorage.setItem('cloud_model', v);
-  }
-  hideOverlay();
-}
-
-// ── Chat ────────────────────────────────────────────────────────────────────
-function newChat() {
-  if (streaming && abortCtrl) { abortCtrl.abort(); }
-  messages = [];
-  var el = document.getElementById('messages');
-  el.innerHTML = '<div id="empty-state"><div class="es-icon">💬</div>' +
-    '<p>Start a conversation. Use Local mode for offline models or Cloud mode for Claude API.</p></div>';
-  resetTokenBar();
-}
-
-function addMessage(role, content) {
-  var es = document.getElementById('empty-state');
-  if (es) es.remove();
-  var container = document.getElementById('messages');
-  var wrap = document.createElement('div');
-  wrap.className = 'msg ' + role;
-  var roleLabel = role === 'user' ? 'You' : 'Assistant';
-  wrap.innerHTML = '<span class="msg-role">' + roleLabel + '</span>' +
-    '<div class="msg-bubble"></div>';
-  wrap.querySelector('.msg-bubble').textContent = content;
-  container.appendChild(wrap);
-  scrollBottom();
-  return wrap.querySelector('.msg-bubble');
-}
-
-function scrollBottom() {
-  var el = document.getElementById('messages');
-  el.scrollTop = el.scrollHeight;
-}
-
-async function sendMessage() {
-  if (streaming) { if (abortCtrl) abortCtrl.abort(); return; }
-  var inp = document.getElementById('user-input');
-  var text = inp.value.trim();
-  if (!text) return;
-  inp.value = ''; autoResize(inp);
-
-  messages.push({role:'user', content:text});
-  addMessage('user', text);
-
-  var btn = document.getElementById('send-btn');
-  btn.disabled = false;
-  btn.textContent = 'Stop';
-  streaming = true;
-
-  var bubble = addMessage('assistant', '');
-  bubble.classList.add('streaming');
-
-  try {
-    if (mode === 'local') {
-      await streamLocal(bubble);
-    } else {
-      await streamCloud(bubble);
-    }
-  } catch(e) {
-    if (e.name !== 'AbortError') {
-      bubble.textContent += '\n[Error: ' + e.message + ']';
-      showErr(e.message);
-    }
-  }
-
-  bubble.classList.remove('streaming');
-  var finalText = bubble.textContent;
-  messages.push({role:'assistant', content:finalText});
-  streaming = false;
-  abortCtrl = null;
-  btn.textContent = 'Send';
-  btn.disabled = false;
-}
-
-// ── Local streaming (OpenAI /v1/chat/completions SSE) ──────────────────────
-async function streamLocal(bubble) {
-  abortCtrl = new AbortController();
-  var sys = document.getElementById('sysprompt').value.trim();
-  var msgs = [];
-  if (sys) msgs.push({role:'system', content:sys});
-  msgs = msgs.concat(messages);
-
-  var resp = await fetch('http://127.0.0.1:' + localPort + '/v1/chat/completions', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({messages: msgs, stream: true, temperature: 0.7}),
-    signal: abortCtrl.signal
-  });
-  if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-  var reader = resp.body.getReader();
-  var dec = new TextDecoder();
-  var buf = ''; var text = '';
-
-  while (true) {
-    var chunk = await reader.read();
-    if (chunk.done) break;
-    buf += dec.decode(chunk.value, {stream:true});
-    var lines = buf.split('\n');
-    buf = lines.pop();
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      if (!line.startsWith('data:')) continue;
-      var raw = line.slice(5).trim();
-      if (raw === '[DONE]') continue;
-      try {
-        var ev = JSON.parse(raw);
-        var delta = ev.choices && ev.choices[0] && ev.choices[0].delta;
-        if (delta && delta.content) {
-          text += delta.content;
-          bubble.textContent = text;
-          scrollBottom();
-        }
-        if (ev.usage) {
-          updateTokenBarLocal(ev.usage.prompt_tokens || 0, ev.usage.completion_tokens || 0);
-        }
-      } catch(e2) {}
-    }
-  }
-}
-
-// ── Cloud streaming (Anthropic /v1/messages SSE) ───────────────────────────
-async function streamCloud(bubble) {
-  var key = localStorage.getItem('anthropic_key') || '';
-  if (!key) { showApikeyScreen(); throw new Error('No API key'); }
-
-  abortCtrl = new AbortController();
-  var sys = document.getElementById('sysprompt').value.trim();
-  var modelId = document.getElementById('model-select').value;
-
-  var body = {
-    model: modelId,
-    max_tokens: 8192,
-    messages: messages.map(function(m){ return {role:m.role, content:m.content}; }),
-    stream: true
-  };
-  if (sys) body.system = sys;
-
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify(body),
-    signal: abortCtrl.signal
-  });
-
-  if (!resp.ok) {
-    var errText = await resp.text().catch(function(){ return ''; });
-    throw new Error('HTTP ' + resp.status + ': ' + errText.slice(0, 200));
-  }
-
-  var reader = resp.body.getReader();
-  var dec = new TextDecoder();
-  var buf = ''; var text = ''; var evType = '';
-
-  while (true) {
-    var chunk = await reader.read();
-    if (chunk.done) break;
-    buf += dec.decode(chunk.value, {stream:true});
-    var lines = buf.split('\n');
-    buf = lines.pop();
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      if (line.startsWith('event:')) {
-        evType = line.slice(6).trim();
-      } else if (line.startsWith('data:')) {
-        var raw = line.slice(5).trim();
-        try {
-          var ev = JSON.parse(raw);
-          if (evType === 'content_block_delta' && ev.delta && ev.delta.text) {
-            text += ev.delta.text;
-            bubble.textContent = text;
-            scrollBottom();
-          }
-          if (evType === 'message_start' && ev.message && ev.message.usage) {
-            var u = ev.message.usage;
-            tokIn += (u.input_tokens || 0);
-            tokCache += ((u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0));
-            refreshTokenBar();
-          }
-          if (evType === 'message_delta' && ev.usage) {
-            tokOut += (ev.usage.output_tokens || 0);
-            refreshTokenBar();
-          }
-        } catch(e2) {}
-      }
-    }
-  }
-}
-
-// ── Token bar ───────────────────────────────────────────────────────────────
-function resetTokenBar() {
-  tokIn = 0; tokOut = 0; tokCache = 0;
-  document.getElementById('tok-in').textContent = '0';
-  document.getElementById('tok-out').textContent = '0';
-  document.getElementById('tok-cache').textContent = '0';
-  document.getElementById('cache-item').style.display = 'none';
-}
-
-function updateTokenBarLocal(inp, out) {
-  document.getElementById('tok-in').textContent = inp;
-  document.getElementById('tok-out').textContent = out;
-  document.getElementById('token-bar').style.display = 'none'; // hidden in local mode
-}
-
-function refreshTokenBar() {
-  document.getElementById('tok-in').textContent  = fmt(tokIn);
-  document.getElementById('tok-out').textContent = fmt(tokOut);
-  if (tokCache > 0) {
-    document.getElementById('tok-cache').textContent = fmt(tokCache);
-    document.getElementById('cache-item').style.display = 'flex';
-  }
-  if (mode === 'cloud') document.getElementById('token-bar').style.display = 'flex';
-}
-
-function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1) + 'k' : String(n); }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
-
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-
-function showErr(msg) {
-  var t = document.getElementById('err-toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  clearTimeout(showErr._timer);
-  showErr._timer = setTimeout(function(){ t.style.display = 'none'; }, 5000);
-}
+// ─── Initial render ─────────────────────────────────────────────────────
+renderers.overview();
 </script>
 </body>
 </html>
