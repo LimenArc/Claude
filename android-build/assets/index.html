@@ -67,14 +67,14 @@
   }
   header button:active{background:rgba(0,80,30,0.5)}
 
-  /* Bottom-docked tab bar — always visible */
+  /* Bottom-docked tab bar — pinned with position:fixed so it can't be hidden */
   nav{
-    display:flex;gap:3px;padding:6px;
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    display:flex;gap:3px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
     background:rgba(0,12,4,0.96);
-    border-top:1px solid var(--accent);
-    flex:0 0 auto;
+    border-top:2px solid var(--accent);
     overflow-x:auto;scrollbar-width:thin;
-    box-shadow:0 -8px 24px rgba(0,0,0,0.6),0 -1px 12px rgba(0,255,90,0.2);
+    box-shadow:0 -8px 24px rgba(0,0,0,0.7),0 -1px 12px rgba(0,255,90,0.3);
   }
   nav::-webkit-scrollbar{height:3px}
   nav::-webkit-scrollbar-thumb{background:var(--accent)}
@@ -94,7 +94,7 @@
     box-shadow:0 0 12px var(--accent),inset 0 0 6px rgba(0,0,0,0.35);
   }
 
-  main{flex:1 1 auto;overflow-y:auto;padding:10px 12px 14px;position:relative;z-index:2;-webkit-overflow-scrolling:touch}
+  main{flex:1 1 auto;overflow-y:auto;padding:10px 12px 78px;position:relative;z-index:2;-webkit-overflow-scrolling:touch}
   .panel{display:none}
   .panel.active{display:block}
 
@@ -251,7 +251,7 @@
 <canvas id="globalRain"></canvas>
 <div id="app">
   <header>
-    <div class="title"><span class="brkt">[</span>SYSDIAG<span class="brkt">]</span><span class="cur">█</span></div>
+    <div class="title"><span class="brkt">[</span>SYSDIAG<span class="brkt">]</span> <span style="color:#39ff7e;font-size:10px;letter-spacing:1px;opacity:.85">v3-bottom-tabs</span><span class="cur">█</span></div>
     <div class="actions">
       <button id="refreshBtn">↻ SCAN</button>
     </div>

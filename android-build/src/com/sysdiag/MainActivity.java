@@ -102,9 +102,18 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true);
         s.setAllowFileAccessFromFileURLs(true);
         s.setAllowUniversalAccessFromFileURLs(true);
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        try {
+            android.webkit.CookieManager.getInstance().removeAllCookies(null);
+            android.webkit.WebStorage.getInstance().deleteAllData();
+            webView.clearCache(true);
+            webView.clearHistory();
+            webView.clearFormData();
+        } catch (Throwable ignored) {}
         webView.addJavascriptInterface(new Bridge(), "Native");
         webView.setWebViewClient(new WebViewClient());
-        webView.loadUrl("file:///android_asset/index.html");
+        // Cache-busting query so the WebView never serves a stale page
+        webView.loadUrl("file:///android_asset/index.html?b=" + System.currentTimeMillis());
     }
 
     @Override

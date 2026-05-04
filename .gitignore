@@ -1,16 +1,17 @@
-__pycache__/
-*.pyc
-*.pyo
-.env
-.venv/
-venv/
-
-javac.*.args
 
 # Android build intermediates
-android-build/gen/
+*.pyc
+*.pyo
+.build/
+.env
+.venv/
+__pycache__/
+android-build/aligned.apk
 android-build/class/
 android-build/classes.dex
-android-build/unsigned.apk
-android-build/aligned.apk
 android-build/debug.keystore
+android-build/gen/
+android-build/unsigned.apk
+build/
+javac.*.args
+venv/
