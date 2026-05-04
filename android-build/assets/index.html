@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
 <title>SysDiag</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -40,7 +40,7 @@
     mix-blend-mode:screen;
   }
   header{
-    padding:6px 10px;
+    padding:calc(6px + env(safe-area-inset-top,0px)) calc(10px + env(safe-area-inset-right,0px)) 6px calc(10px + env(safe-area-inset-left,0px));
     background:rgba(0,16,6,0.92);
     border-bottom:1px solid var(--border);
     display:flex;align-items:center;justify-content:space-between;
@@ -70,7 +70,7 @@
   /* Bottom-docked tab bar — pinned with position:fixed so it can't be hidden */
   nav{
     position:fixed;left:0;right:0;bottom:0;z-index:20;
-    display:flex;gap:3px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
+    display:flex;gap:3px;padding:6px calc(6px + env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px));
     background:rgba(0,12,4,0.96);
     border-top:2px solid var(--accent);
     overflow-x:auto;scrollbar-width:thin;
@@ -251,7 +251,7 @@
 <canvas id="globalRain"></canvas>
 <div id="app">
   <header>
-    <div class="title"><span class="brkt">[</span>SYSDIAG<span class="brkt">]</span> <span style="color:#39ff7e;font-size:10px;letter-spacing:1px;opacity:.85">v3-bottom-tabs</span><span class="cur">█</span></div>
+    <div class="title"><span class="brkt">[</span>SYSDIAG<span class="brkt">]</span> <span style="color:#39ff7e;font-size:10px;letter-spacing:1px;opacity:.85">v4</span><span class="cur">█</span></div>
     <div class="actions">
       <button id="refreshBtn">↻ SCAN</button>
     </div>
@@ -283,6 +283,14 @@
 
 <script>
 "use strict";
+
+// Disable WebView scroll restoration so a fresh load always starts at top
+try { history.scrollRestoration = "manual"; } catch(_){}
+window.addEventListener("load", () => {
+  const m = document.querySelector("main");
+  if (m) m.scrollTop = 0;
+  window.scrollTo(0, 0);
+});
 
 // ─── Bridge wrapper (with mock fallback for previewing on desktop) ──────────
 const N = (function(){
@@ -373,6 +381,12 @@ function activate(tab) {
   if (currentTab === "sensors" && tab !== "sensors") leaveSensors();
   currentTab = tab;
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+  // Force the panel to start at the top after every tab switch
+  setTimeout(() => {
+    const m = document.querySelector("main");
+    if (m) m.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, 0);
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id==="panel-"+tab));
   if (renderers[tab]) renderers[tab]();
 }
