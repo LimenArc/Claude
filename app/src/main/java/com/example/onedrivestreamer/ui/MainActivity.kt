@@ -1,6 +1,8 @@
 package com.example.onedrivestreamer.ui
 
 import android.os.Bundle
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
@@ -19,27 +21,53 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
 
-        // Show previous crash so we can diagnose remotely
-        val prefs = getSharedPreferences("crash_log", android.content.Context.MODE_PRIVATE)
-        val crash = prefs.getString("crash", null)
-        if (crash != null) {
+        // Show crash from PREVIOUS run before anything else can crash
+        val prefs = getSharedPreferences("crash_log", MODE_PRIVATE)
+        val prevCrash = prefs.getString("crash", null)
+        if (prevCrash != null) {
             prefs.edit().remove("crash").apply()
-            android.app.AlertDialog.Builder(this)
-                .setTitle("Crash Log (send to developer)")
-                .setMessage(crash)
-                .setPositiveButton("OK", null)
-                .show()
+            showCrash(prevCrash)
+            return
         }
 
-        viewModel.initAuth()
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+        } catch (e: Exception) {
+            showCrash("INFLATE ERROR:\n${e.stackTraceToString()}")
+            return
+        }
+
+        try {
+            setContentView(binding.root)
+        } catch (e: Exception) {
+            showCrash("SET_CONTENT ERROR:\n${e.stackTraceToString()}")
+            return
+        }
+
+        try {
+            setSupportActionBar(binding.toolbar)
+            viewModel.initAuth()
+        } catch (e: Exception) {
+            showCrash("INIT ERROR:\n${e.stackTraceToString()}")
+        }
+    }
+
+    private fun showCrash(msg: String) {
+        val tv = TextView(this).apply {
+            text = msg
+            setPadding(24, 24, 24, 24)
+            textSize = 10f
+            setTextIsSelectable(true)
+        }
+        val sv = ScrollView(this)
+        sv.addView(tv)
+        setContentView(sv)
     }
 
     override fun onStart() {
         super.onStart()
+        if (!::binding.isInitialized) return
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment ?: return
         navController = navHostFragment.navController
