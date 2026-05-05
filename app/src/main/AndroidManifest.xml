@@ -37,6 +37,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Runs before all other providers to capture early crashes -->
+        <provider
+            android:name=".CrashCatcherProvider"
+            android:authorities="${applicationId}.crashcatcher"
+            android:exported="false"
+            android:initOrder="100" />
+
         <!-- Disable MSAL's FileContentProvider to prevent startup crash on Android 14+ -->
         <provider
             android:name="com.microsoft.identity.client.FileContentProvider"
