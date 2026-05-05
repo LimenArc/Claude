@@ -5,7 +5,9 @@ import android.content.Context
 import com.aethermon.streamer.BuildConfig
 import com.microsoft.identity.client.*
 import com.microsoft.identity.client.exception.MsalException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -63,7 +65,7 @@ class AuthManager(context: Context) {
 
     suspend fun acquireTokenSilent(): String? {
         val app = pca ?: return null
-        val account = app.currentAccount?.currentAccount ?: return null
+        val account = withContext(Dispatchers.IO) { app.currentAccount?.currentAccount } ?: return null
         return suspendCancellableCoroutine { cont ->
             app.acquireTokenSilentAsync(
                 scopes,
@@ -114,5 +116,7 @@ class AuthManager(context: Context) {
         })
     }
 
-    fun isSignedIn(): Boolean = pca?.currentAccount?.currentAccount != null
+    suspend fun isSignedIn(): Boolean = withContext(Dispatchers.IO) {
+        pca?.currentAccount?.currentAccount != null
+    }
 }
