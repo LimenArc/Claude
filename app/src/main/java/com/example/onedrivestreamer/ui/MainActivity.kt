@@ -22,6 +22,19 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+
+        // Show previous crash so we can diagnose remotely
+        val prefs = getSharedPreferences("crash_log", android.content.Context.MODE_PRIVATE)
+        val crash = prefs.getString("crash", null)
+        if (crash != null) {
+            prefs.edit().remove("crash").apply()
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Crash Log (send to developer)")
+                .setMessage(crash)
+                .setPositiveButton("OK", null)
+                .show()
+        }
+
         viewModel.initAuth()
     }
 
