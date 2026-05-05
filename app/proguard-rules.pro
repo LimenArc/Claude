@@ -1,0 +1,3 @@
+-keep class com.example.onedrivestreamer.data.** { *; }
+-keep class com.microsoft.identity.** { *; }
+-dontwarn com.microsoft.identity.**

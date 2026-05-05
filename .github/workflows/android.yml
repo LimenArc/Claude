@@ -1,0 +1,42 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create dummy secrets.properties
+        run: |
+          cat > secrets.properties <<EOF
+          CLIENT_ID=00000000-0000-0000-0000-000000000000
+          REDIRECT_URI=msauth://com.example.onedrivestreamer/placeholder
+          EOF
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: onedrive-streamer-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OneDrive Streamer</string>
+    <string name="no_videos_found">No videos found in your OneDrive</string>
+    <string name="thumbnail_desc">Video thumbnail</string>
+</resources>

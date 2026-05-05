@@ -1,0 +1,16 @@
+{
+  "client_id": "MSAL_CLIENT_ID_PLACEHOLDER",
+  "authorization_user_agent": "DEFAULT",
+  "redirect_uri": "MSAL_REDIRECT_URI_PLACEHOLDER",
+  "account_mode": "SINGLE",
+  "broker_redirect_uri_registered": false,
+  "authorities": [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADandPersonalMicrosoftAccount",
+        "tenant_id": "common"
+      }
+    }
+  ]
+}

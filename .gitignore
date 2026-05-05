@@ -14,3 +14,20 @@ android-build/classes.dex
 android-build/unsigned.apk
 android-build/aligned.apk
 android-build/debug.keystore
+
+# Android project
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+app/build
+/captures
+.externalNativeBuild
+.cxx
+*.keystore
+!debug.keystore
+
+# Secrets — never commit real credentials
+secrets.properties
