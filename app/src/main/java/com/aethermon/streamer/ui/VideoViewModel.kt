@@ -1,13 +1,13 @@
-package com.example.onedrivestreamer.ui
+package com.aethermon.streamer.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.onedrivestreamer.auth.AuthManager
-import com.example.onedrivestreamer.data.VideoItem
-import com.example.onedrivestreamer.data.VideoRepository
+import com.aethermon.streamer.auth.AuthManager
+import com.aethermon.streamer.data.VideoItem
+import com.aethermon.streamer.data.VideoRepository
 import kotlinx.coroutines.launch
 
 sealed class UiState<out T> {

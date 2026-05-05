@@ -1,6 +1,6 @@
-package com.example.onedrivestreamer.data
+package com.aethermon.streamer.data
 
-import com.example.onedrivestreamer.network.RetrofitClient
+import com.aethermon.streamer.network.RetrofitClient
 
 class VideoRepository {
 

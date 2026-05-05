@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer.data
+package com.aethermon.streamer.data
 
 import com.google.gson.annotations.SerializedName
 

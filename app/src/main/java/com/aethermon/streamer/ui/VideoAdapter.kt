@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer.ui
+package com.aethermon.streamer.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -6,9 +6,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.onedrivestreamer.R
-import com.example.onedrivestreamer.data.VideoItem
-import com.example.onedrivestreamer.databinding.ItemVideoBinding
+import com.aethermon.streamer.R
+import com.aethermon.streamer.data.VideoItem
+import com.aethermon.streamer.databinding.ItemVideoBinding
 import java.util.concurrent.TimeUnit
 
 class VideoAdapter(

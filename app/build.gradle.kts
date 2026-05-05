@@ -14,11 +14,11 @@ val secrets = Properties().apply {
 }
 
 android {
-    namespace = "com.example.onedrivestreamer"
+    namespace = "com.aethermon.streamer"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.onedrivestreamer"
+        applicationId = "com.aethermon.streamer"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -30,11 +30,11 @@ android {
         )
         buildConfigField(
             "String", "REDIRECT_URI",
-            "\"${secrets.getProperty("REDIRECT_URI", System.getenv("REDIRECT_URI") ?: "msauth://com.example.onedrivestreamer/placeholder")}\""
+            "\"${secrets.getProperty("REDIRECT_URI", System.getenv("REDIRECT_URI") ?: "msauth://com.aethermon.streamer/placeholder")}\""
         )
 
         manifestPlaceholders["msalRedirectUri"] =
-            secrets.getProperty("REDIRECT_URI", System.getenv("REDIRECT_URI") ?: "msauth://com.example.onedrivestreamer/placeholder")
+            secrets.getProperty("REDIRECT_URI", System.getenv("REDIRECT_URI") ?: "msauth://com.aethermon.streamer/placeholder")
     }
 
     buildTypes {

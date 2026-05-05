@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer.ui
+package com.aethermon.streamer.ui
 
 import android.os.Bundle
 import android.widget.ScrollView
@@ -10,8 +10,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.example.onedrivestreamer.R
-import com.example.onedrivestreamer.databinding.ActivityMainBinding
+import com.aethermon.streamer.R
+import com.aethermon.streamer.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 

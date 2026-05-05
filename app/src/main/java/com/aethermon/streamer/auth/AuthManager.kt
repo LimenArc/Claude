@@ -1,8 +1,8 @@
-package com.example.onedrivestreamer.auth
+package com.aethermon.streamer.auth
 
 import android.app.Activity
 import android.content.Context
-import com.example.onedrivestreamer.BuildConfig
+import com.aethermon.streamer.BuildConfig
 import com.microsoft.identity.client.*
 import com.microsoft.identity.client.exception.MsalException
 import kotlinx.coroutines.suspendCancellableCoroutine

@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer.ui
+package com.aethermon.streamer.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.onedrivestreamer.databinding.FragmentVideoListBinding
+import com.aethermon.streamer.databinding.FragmentVideoListBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 

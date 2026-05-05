@@ -41,12 +41,12 @@ keytool -exportcert -alias androiddebugkey \
 Construct the full redirect URI:
 
 ```
-msauth://com.example.onedrivestreamer/<PASTE_BASE64_OUTPUT_HERE>
+msauth://com.aethermon.streamer/<PASTE_BASE64_OUTPUT_HERE>
 ```
 
 Back in Azure Portal:
 1. Open your app registration → **Authentication** → **Add a platform** → **Android**.
-2. Enter **Package name**: `com.example.onedrivestreamer`
+2. Enter **Package name**: `com.aethermon.streamer`
 3. Enter the **Signature hash** (base64 output from above, without `msauth://...` prefix).
 4. Click **Configure**. Azure will show you the complete redirect URI — copy it.
 
@@ -73,7 +73,7 @@ Edit `secrets.properties`:
 
 ```properties
 CLIENT_ID=<your Application (client) ID from Azure>
-REDIRECT_URI=msauth://com.example.onedrivestreamer/<your_base64_hash>
+REDIRECT_URI=msauth://com.aethermon.streamer/<your_base64_hash>
 ```
 
 > `secrets.properties` is git-ignored. **Never commit it.**

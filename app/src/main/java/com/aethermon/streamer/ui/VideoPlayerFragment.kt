@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer.ui
+package com.aethermon.streamer.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,7 +10,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.navArgs
 import androidx.window.layout.WindowMetricsCalculator
-import com.example.onedrivestreamer.databinding.FragmentVideoPlayerBinding
+import com.aethermon.streamer.databinding.FragmentVideoPlayerBinding
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer

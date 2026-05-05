@@ -1,6 +1,6 @@
-package com.example.onedrivestreamer.network
+package com.aethermon.streamer.network
 
-import com.example.onedrivestreamer.data.DriveItemsResponse
+import com.aethermon.streamer.data.DriveItemsResponse
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query

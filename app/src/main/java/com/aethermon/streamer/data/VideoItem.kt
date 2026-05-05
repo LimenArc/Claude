@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer.data
+package com.aethermon.streamer.data
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

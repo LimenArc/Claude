@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/videoListFragment"
-        android:name="com.example.onedrivestreamer.ui.VideoListFragment"
+        android:name="com.aethermon.streamer.ui.VideoListFragment"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_video_list">
 
@@ -18,13 +18,13 @@
 
     <fragment
         android:id="@+id/videoPlayerFragment"
-        android:name="com.example.onedrivestreamer.ui.VideoPlayerFragment"
+        android:name="com.aethermon.streamer.ui.VideoPlayerFragment"
         android:label="{video.name}"
         tools:layout="@layout/fragment_video_player">
 
         <argument
             android:name="video"
-            app:argType="com.example.onedrivestreamer.data.VideoItem" />
+            app:argType="com.aethermon.streamer.data.VideoItem" />
     </fragment>
 
 </navigation>

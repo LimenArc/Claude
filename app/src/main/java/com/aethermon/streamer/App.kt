@@ -1,4 +1,4 @@
-package com.example.onedrivestreamer
+package com.aethermon.streamer
 
 import android.app.Application
 import android.content.Context

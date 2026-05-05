@@ -32,7 +32,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="msauth"
-                    android:host="com.example.onedrivestreamer" />
+                    android:host="com.aethermon.streamer" />
             </intent-filter>
         </activity>
 
