@@ -1,0 +1,276 @@
+# dailywire configuration
+#
+# Every value here has a built-in default; this file exists so you can see and
+# change them. Secrets never live here -- they come from environment variables
+# (see .env.example).
+
+[general]
+# Where episodes, the script markdown, and the public feed directory go.
+episodes_dir = "./episodes"
+public_dir = "./public"
+# SQLite store of every item ever seen, so nothing repeats across days.
+db_path = "./dailywire.db"
+timezone = "America/New_York"
+
+[podcast]
+title = "Dailywire"
+subtitle = "Your automated morning briefing"
+description = """
+A machine-assembled daily briefing covering artificial intelligence, technology,
+and world news. Sources are aggregated from public feeds; summaries are written
+by a language model and attributed to the reporting outlet."""
+author = "dailywire"
+email = "noreply@localhost"
+language = "en-us"
+# Public base URL used to build enclosure links in the RSS feed. On a LAN this
+# is normally http://<your-machine-ip>:8000 -- podcast apps need absolute URLs.
+base_url = "http://127.0.0.1:8000"
+explicit = false
+category = "News"
+subcategory = "Tech News"
+# Optional path to a square cover image (>=1400px) copied into public/.
+artwork = ""
+
+[ingest]
+user_agent = "dailywire/0.1 (+https://github.com/LimenArc/claude; personal podcast generator)"
+# Seconds between requests to the same domain.
+per_domain_delay = 1.5
+max_concurrency = 8
+request_timeout = 20.0
+# Only consider items published within this window.
+lookback_hours = 24
+respect_robots_txt = true
+# Pull full article text when a feed only carries a snippet.
+fetch_full_text = true
+# Feed entries shorter than this (characters) are treated as snippets.
+snippet_threshold = 600
+max_full_text_fetches = 40
+
+[ingest.hackernews]
+enabled = true
+min_points = 100
+max_items = 20
+
+[ingest.arxiv]
+enabled = true
+categories = ["cs.AI", "cs.LG"]
+max_items = 20
+
+# ---------------------------------------------------------------------------
+# Sources.
+#
+# weight    relative trust/interest, used in ranking (1.0 is neutral)
+# category  must be one of the categories in [ranking.quotas]
+# ---------------------------------------------------------------------------
+
+# --- AI research and industry ---------------------------------------------
+[[sources]]
+name = "Google Research Blog"
+url = "https://research.google/blog/rss/"
+category = "ai"
+weight = 1.2
+
+[[sources]]
+name = "OpenAI Blog"
+url = "https://openai.com/blog/rss.xml"
+category = "ai"
+weight = 1.1
+
+[[sources]]
+name = "Anthropic News"
+url = "https://www.anthropic.com/news/rss.xml"
+category = "ai"
+weight = 1.1
+
+[[sources]]
+name = "DeepMind Blog"
+url = "https://deepmind.google/blog/rss.xml"
+category = "ai"
+weight = 1.1
+
+[[sources]]
+name = "MIT Technology Review — AI"
+url = "https://www.technologyreview.com/topic/artificial-intelligence/feed"
+category = "ai"
+weight = 1.2
+
+[[sources]]
+name = "Import AI"
+url = "https://importai.substack.com/feed"
+category = "ai"
+weight = 1.0
+
+[[sources]]
+name = "The Batch"
+url = "https://www.deeplearning.ai/the-batch/feed/"
+category = "ai"
+weight = 1.0
+
+# --- General technology ----------------------------------------------------
+[[sources]]
+name = "Ars Technica"
+url = "https://feeds.arstechnica.com/arstechnica/index"
+category = "tech"
+weight = 1.2
+
+[[sources]]
+name = "The Verge"
+url = "https://www.theverge.com/rss/index.xml"
+category = "tech"
+weight = 1.0
+
+[[sources]]
+name = "TechCrunch"
+url = "https://techcrunch.com/feed/"
+category = "tech"
+weight = 0.9
+
+[[sources]]
+name = "Hacker News (front page)"
+url = "https://news.ycombinator.com/rss"
+category = "tech"
+weight = 0.8
+
+# --- World news ------------------------------------------------------------
+# Deliberately spread across outlets with different national vantage points and
+# editorial politics: UK public (BBC), Qatari state-funded (Al Jazeera), German
+# public (DW), French public/AFP-adjacent (France 24), US public (NPR).
+# Corroboration scoring rewards a story that shows up across several of these,
+# so the spread is doing real work -- keep it wide if you edit this list.
+[[sources]]
+name = "BBC World"
+url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+category = "world"
+weight = 1.2
+
+[[sources]]
+name = "Al Jazeera"
+url = "https://www.aljazeera.com/xml/rss/all.xml"
+category = "world"
+weight = 1.1
+
+[[sources]]
+name = "Deutsche Welle"
+url = "https://rss.dw.com/rdf/rss-en-world"
+category = "world"
+weight = 1.0
+
+[[sources]]
+name = "France 24"
+url = "https://www.france24.com/en/rss"
+category = "world"
+weight = 1.0
+
+[[sources]]
+name = "NPR World"
+url = "https://feeds.npr.org/1004/rss.xml"
+category = "world"
+weight = 1.0
+
+# --- Science ---------------------------------------------------------------
+[[sources]]
+name = "Nature News"
+url = "https://www.nature.com/nature.rss"
+category = "science"
+weight = 1.1
+
+[[sources]]
+name = "Quanta Magazine"
+url = "https://api.quantamagazine.org/feed/"
+category = "science"
+weight = 1.0
+
+# ---------------------------------------------------------------------------
+
+[cluster]
+# Local sentence-transformers model. If it can't be loaded, dailywire falls
+# back to TF-IDF automatically.
+embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+cosine_threshold = 0.62
+# TF-IDF fallback (character n-grams) scores differently; calibrated so that
+# same-story pairs merge while merely same-topic stories stay apart.
+tfidf_threshold = 0.35
+# Never merge items published more than this far apart.
+max_cluster_span_hours = 36
+
+[ranking]
+max_stories = 12
+# Target runtime in minutes. Stories are dropped from the bottom of the ranking
+# if the estimated read time overshoots.
+target_runtime_minutes = 12
+words_per_minute = 155
+# Half-life in hours for the recency term.
+recency_half_life = 10.0
+# Score = w_recency*recency + w_source*source_weight
+#       + w_corroboration*log1p(outlets) + w_hn*log1p(points)
+weight_recency = 1.0
+weight_source = 0.8
+weight_corroboration = 1.0
+weight_hn = 0.5
+
+# Minimum/maximum stories per category, so world news doesn't get crowded out
+# by an AI news cycle. Minimums are honoured first (best-scoring story in the
+# category wins the slot), then remaining slots go to the global ranking.
+[ranking.quotas]
+world = { min = 3, max = 5 }
+ai = { min = 2, max = 5 }
+tech = { min = 2, max = 4 }
+science = { min = 0, max = 2 }
+
+[llm]
+# Any OpenAI-compatible /chat/completions endpoint: OpenAI, together, groq,
+# vLLM, llama.cpp --server, LM Studio, Ollama (/v1), openrouter...
+provider = "openai_compatible"
+base_url = "https://api.openai.com/v1"
+model = "gpt-4o-mini"
+# Name of the environment variable holding the key. The key itself is never
+# stored in this file.
+api_key_env = "DAILYWIRE_LLM_API_KEY"
+temperature = 0.4
+max_tokens = 1200
+timeout = 90.0
+max_retries = 3
+
+[script]
+# Spoken-word shaping applied after generation.
+spell_out_numbers = true
+strip_urls = true
+show_name = "Dailywire"
+sign_off = "That's your briefing. Sources are linked in the show notes."
+
+[tts]
+# piper (local, default) | kokoro (local) | hosted (OpenAI-compatible speech API)
+provider = "piper"
+# Characters per synthesis chunk; chunks are split on sentence boundaries and
+# concatenated with ffmpeg.
+chunk_chars = 1800
+# EBU R128 loudness normalisation targets (ffmpeg loudnorm).
+loudness_i = -16.0
+loudness_tp = -1.5
+loudness_lra = 11.0
+bitrate = "96k"
+sample_rate = 22050
+
+[tts.piper]
+# Path to the piper binary and a .onnx voice. Download voices from
+# https://huggingface.co/rhasspy/piper-voices
+binary = "piper"
+voice = "./voices/en_US-lessac-medium.onnx"
+speaker = 0
+length_scale = 1.0
+
+[tts.kokoro]
+voice = "af_heart"
+speed = 1.0
+lang_code = "a"
+
+[tts.hosted]
+base_url = "https://api.openai.com/v1"
+model = "tts-1"
+voice = "alloy"
+api_key_env = "DAILYWIRE_TTS_API_KEY"
+response_format = "mp3"
+
+[server]
+host = "0.0.0.0"
+port = 8000
